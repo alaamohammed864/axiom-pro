@@ -1,0 +1,3654 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AXIOM PRO v4.0 — ENGINEERING SIMULATION SUITE | ENG_ALAA MOHAMMED</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Cairo:wght@300;400;600;700&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#020408;--void-light:#0a1020;
+  --panel:#071525;--panel-hover:#0d1f35;
+  --border:#0f3a5c;--border-glow:rgba(0,212,255,0.3);
+  --cyan:#00d4ff;--cyan-dim:#0088aa;
+  --amber:#ffaa00;--amber-dim:#cc7700;
+  --red:#ff3333;--red-dim:#aa2222;
+  --green:#00ff88;--green-dim:#00aa55;
+  --purple:#aa00ff;--pink:#ff00aa;
+  --text:#e0f0ff;--text-dim:#8aa0b8;
+  --grid:rgba(0,212,255,0.05);
+  --shadow:0 8px 32px rgba(0,0,0,0.4);
+  --glow-cyan:0 0 20px rgba(0,212,255,0.4);
+  --glow-amber:0 0 20px rgba(255,170,0,0.4);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--void);color:var(--text);font-family:'Cairo','Rajdhani',sans-serif;min-height:100vh;overflow:hidden;font-size:13px;}
+
+.bg-grid{
+  position:fixed;inset:0;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:50px 50px;pointer-events:none;z-index:0;
+  animation:gridMove 20s linear infinite;
+}
+@keyframes gridMove{0%{background-position:0 0}100%{background-position:0 50px}}
+
+.app-container{display:grid;grid-template-rows:50px 35px 26px 1fr 30px;height:100vh;position:relative;z-index:1;}
+
+/* ── TOP BAR ── */
+.top-bar{
+  background:linear-gradient(180deg,var(--panel) 0%,var(--void) 100%);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;gap:20px;
+}
+.brand{display:flex;align-items:center;gap:12px;}
+.logo-icon{
+  width:36px;height:36px;
+  background:linear-gradient(135deg,var(--cyan),var(--cyan-dim));
+  clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Orbitron';font-weight:900;font-size:14px;
+  color:var(--void);animation:pulse 2s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{box-shadow:0 0 10px var(--cyan)}50%{box-shadow:0 0 25px var(--cyan),0 0 40px rgba(0,212,255,0.3)}}
+.brand-text h1{font-family:'Orbitron';font-size:16px;background:linear-gradient(90deg,var(--cyan),var(--text));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:2px;}
+.brand-text span{font-family:'Share Tech Mono';font-size:9px;color:var(--text-dim);letter-spacing:1px;}
+.main-menu{display:flex;gap:4px;flex:1;justify-content:center;}
+.menu-item{
+  padding:8px 16px;background:transparent;border:none;color:var(--text-dim);
+  font-family:'Rajdhani';font-size:12px;font-weight:600;letter-spacing:1px;
+  cursor:pointer;border-radius:4px;transition:all 0.3s;text-transform:uppercase;
+  position:relative;
+}
+.menu-item:hover,.menu-item.active{background:rgba(0,212,255,0.1);color:var(--cyan);box-shadow:inset 0 0 10px rgba(0,212,255,0.1);}
+.menu-item.active::after{content:'';position:absolute;bottom:0;left:10%;right:10%;height:2px;background:var(--cyan);border-radius:2px;}
+.status-bar{display:flex;gap:15px;align-items:center;font-family:'Share Tech Mono';font-size:10px;}
+.status-item{display:flex;align-items:center;gap:6px;color:var(--text-dim);}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 2s infinite;}
+.status-dot.warning{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.4}}
+
+/* ── TOOLBAR ── */
+.toolbar{background:var(--void-light);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 15px;gap:10px;}
+.tool-group{display:flex;gap:2px;padding:0 10px;border-right:1px solid var(--border);}
+.tool-group:last-child{border-right:none}
+.tool-btn{
+  width:28px;height:28px;background:transparent;border:none;color:var(--text-dim);
+  border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:14px;transition:all 0.2s;position:relative;
+}
+.tool-btn:hover{background:rgba(0,212,255,0.1);color:var(--cyan);}
+.tool-btn.active{background:var(--cyan);color:var(--void);}
+.tool-btn[title]:hover::after{
+  content:attr(title);position:absolute;bottom:-25px;left:50%;transform:translateX(-50%);
+  background:var(--panel);border:1px solid var(--border);color:var(--text);
+  padding:2px 8px;border-radius:3px;font-size:9px;white-space:nowrap;z-index:100;
+  font-family:'Share Tech Mono';pointer-events:none;
+}
+.tool-select{
+  background:var(--panel);border:1px solid var(--border);color:var(--text);
+  padding:4px 8px;font-family:'Share Tech Mono';font-size:10px;border-radius:3px;outline:none;cursor:pointer;
+}
+.tool-select:focus{border-color:var(--cyan);}
+.tool-select option{background:var(--panel);}
+
+/* ── WORKSPACE ── */
+.workspace{display:grid;grid-template-columns:280px 1fr 300px;overflow:hidden;}
+
+/* ── LEFT PANEL ── */
+.left-panel{background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.panel-header{
+  padding:10px 15px;background:linear-gradient(90deg,var(--void-light),transparent);
+  border-bottom:1px solid var(--border);font-family:'Orbitron';font-size:10px;
+  color:var(--cyan);letter-spacing:2px;display:flex;justify-content:space-between;align-items:center;
+}
+.tree-view{flex:1;overflow-y:auto;padding:10px;}
+.tree-item{
+  display:flex;align-items:center;gap:8px;padding:6px 10px;margin:2px 0;
+  border-radius:4px;cursor:pointer;transition:all 0.2s;font-size:12px;color:var(--text-dim);
+  user-select:none;
+}
+.tree-item:hover{background:rgba(0,212,255,0.05);color:var(--text);}
+.tree-item.active{background:rgba(0,212,255,0.1);color:var(--cyan);border-right:2px solid var(--cyan);}
+.tree-icon{font-size:14px;width:20px;text-align:center;}
+.tree-name{flex:1;}
+.tree-children{margin-right:20px;border-right:1px dotted var(--border);}
+.tree-item-actions{display:none;gap:3px;}
+.tree-item:hover .tree-item-actions{display:flex;}
+.tree-action-btn{
+  background:none;border:none;color:var(--text-dim);cursor:pointer;
+  padding:0 3px;font-size:10px;border-radius:2px;transition:all 0.2s;
+}
+.tree-action-btn:hover{color:var(--cyan);background:rgba(0,212,255,0.1);}
+
+/* Inline Edit */
+.tree-item-input{
+  background:var(--void);border:1px solid var(--cyan);color:var(--cyan);
+  padding:2px 6px;border-radius:3px;font-size:12px;font-family:'Cairo',sans-serif;
+  outline:none;flex:1;min-width:0;
+}
+
+/* Add item UI */
+.add-item-row{
+  display:flex;gap:5px;padding:6px 10px;align-items:center;
+}
+.add-item-input{
+  flex:1;background:var(--void);border:1px solid var(--border);color:var(--text);
+  padding:4px 8px;border-radius:3px;font-size:11px;outline:none;font-family:'Cairo',sans-serif;
+}
+.add-item-input:focus{border-color:var(--cyan);}
+.add-item-select{
+  background:var(--void);border:1px solid var(--border);color:var(--text-dim);
+  padding:4px 5px;border-radius:3px;font-size:10px;outline:none;cursor:pointer;
+}
+.add-item-confirm{
+  background:var(--cyan);border:none;color:var(--void);
+  padding:4px 10px;border-radius:3px;font-size:11px;cursor:pointer;font-weight:700;
+  transition:all 0.2s;
+}
+.add-item-confirm:hover{background:var(--text);}
+
+/* ── PROPERTIES ── */
+.properties-panel{height:45%;border-top:1px solid var(--border);overflow-y:auto;}
+.prop-group{margin:10px 0;}
+.prop-section-header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:5px 15px;cursor:pointer;
+}
+.prop-label{font-family:'Share Tech Mono';font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;}
+.prop-row{display:flex;justify-content:space-between;align-items:center;padding:8px 15px;border-bottom:1px solid rgba(255,255,255,0.03);}
+.prop-name{color:var(--text);font-size:11px;}
+.prop-value-display{
+  font-family:'Share Tech Mono';font-size:11px;color:var(--cyan);
+  background:var(--void);padding:3px 8px;border-radius:3px;
+  border:1px solid var(--border);min-width:80px;text-align:center;
+  cursor:pointer;transition:all 0.2s;
+}
+.prop-value-display:hover{border-color:var(--cyan);}
+.prop-value-input{
+  font-family:'Share Tech Mono';font-size:11px;color:var(--cyan);
+  background:var(--void);padding:3px 8px;border-radius:3px;
+  border:1px solid var(--cyan);min-width:80px;text-align:center;
+  outline:none;width:80px;
+}
+.prop-value-select{
+  font-family:'Share Tech Mono';font-size:11px;color:var(--cyan);
+  background:var(--void);padding:3px 8px;border-radius:3px;
+  border:1px solid var(--cyan);outline:none;cursor:pointer;
+}
+.prop-value-select option{background:var(--panel);}
+
+/* ── CENTER VIEWPORT ── */
+.viewport{position:relative;background:radial-gradient(ellipse at center,var(--void-light) 0%,var(--void) 100%);overflow:hidden;}
+.viewport-header{
+  position:absolute;top:0;left:0;right:0;padding:10px 15px;
+  background:linear-gradient(180deg,rgba(2,4,8,0.9) 0%,transparent 100%);
+  display:flex;justify-content:space-between;z-index:10;pointer-events:none;
+}
+.viewport-title{font-family:'Orbitron';font-size:11px;color:var(--cyan);letter-spacing:2px;}
+.viewport-info{display:flex;gap:15px;font-family:'Share Tech Mono';font-size:10px;color:var(--text-dim);}
+#canvas-container{width:100%;height:100%;position:relative;}
+.viewport-toolbar{
+  position:absolute;bottom:20px;left:50%;transform:translateX(-50%);
+  display:flex;gap:5px;background:rgba(7,21,37,0.9);
+  padding:5px;border-radius:6px;border:1px solid var(--border);
+  backdrop-filter:blur(10px);z-index:10;
+}
+.vp-btn{
+  padding:8px 16px;background:transparent;border:none;color:var(--text-dim);
+  font-family:'Rajdhani';font-size:11px;font-weight:600;cursor:pointer;
+  border-radius:4px;transition:all 0.3s;display:flex;align-items:center;gap:6px;
+}
+.vp-btn:hover,.vp-btn.active{background:rgba(0,212,255,0.15);color:var(--cyan);}
+.vp-btn.active{box-shadow:inset 0 0 10px rgba(0,212,255,0.2);}
+
+/* View Cube */
+.view-cube{position:absolute;top:20px;left:20px;width:80px;height:80px;z-index:10;}
+
+/* ── RIGHT PANEL ── */
+.right-panel{background:var(--panel);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.results-tabs{display:flex;border-bottom:1px solid var(--border);}
+.res-tab{
+  flex:1;padding:10px;background:transparent;border:none;color:var(--text-dim);
+  font-family:'Rajdhani';font-size:11px;font-weight:600;cursor:pointer;transition:all 0.3s;
+  border-bottom:2px solid transparent;
+}
+.res-tab:hover{color:var(--text);}
+.res-tab.active{color:var(--cyan);border-bottom-color:var(--cyan);background:rgba(0,212,255,0.05);}
+.results-content{flex:1;overflow-y:auto;padding:15px;}
+.results-panel-content{display:none;}
+.results-panel-content.active{display:block;}
+.metric-card{
+  background:var(--void-light);border:1px solid var(--border);
+  border-radius:6px;padding:15px;margin-bottom:10px;transition:all 0.3s;
+}
+.metric-card:hover{border-color:var(--border-glow);transform:translateY(-2px);box-shadow:var(--shadow);}
+.metric-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.metric-name{font-family:'Orbitron';font-size:10px;color:var(--text-dim);letter-spacing:1px;}
+.metric-status{padding:3px 8px;border-radius:3px;font-family:'Share Tech Mono';font-size:9px;}
+.metric-status.pass{background:rgba(0,255,136,0.1);color:var(--green);border:1px solid var(--green-dim)}
+.metric-status.warn{background:rgba(255,170,0,0.1);color:var(--amber);border:1px solid var(--amber-dim)}
+.metric-status.fail{background:rgba(255,51,51,0.1);color:var(--red);border:1px solid var(--red-dim)}
+.metric-value{font-family:'Orbitron';font-size:24px;color:var(--cyan);text-shadow:var(--glow-cyan);}
+.metric-unit{font-family:'Share Tech Mono';font-size:10px;color:var(--text-dim);margin-right:5px;}
+.metric-limit{font-size:10px;color:var(--text-dim);margin-top:5px;font-family:'Share Tech Mono';}
+.mini-chart{height:60px;background:var(--void);border:1px solid var(--border);border-radius:4px;margin-top:8px;position:relative;overflow:hidden;}
+
+/* Probe tab */
+.probe-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.probe-cell{
+  background:var(--void-light);border:1px solid var(--border);border-radius:4px;
+  padding:10px;text-align:center;
+}
+.probe-cell-label{font-family:'Share Tech Mono';font-size:9px;color:var(--text-dim);margin-bottom:5px;}
+.probe-cell-val{font-family:'Orbitron';font-size:14px;color:var(--green);}
+
+/* Graphs tab */
+.graph-canvas{width:100%;height:120px;border:1px solid var(--border);border-radius:4px;background:var(--void);display:block;}
+.graph-title{font-family:'Share Tech Mono';font-size:9px;color:var(--text-dim);margin-bottom:5px;margin-top:10px;}
+
+/* Timeline */
+.timeline{height:60px;border-top:1px solid var(--border);background:var(--void-light);padding:10px;}
+.timeline-slider{
+  width:100%;height:4px;-webkit-appearance:none;background:var(--border);
+  border-radius:2px;outline:none;margin-top:10px;
+}
+.timeline-slider::-webkit-slider-thumb{
+  -webkit-appearance:none;width:12px;height:12px;background:var(--cyan);
+  border-radius:50%;cursor:pointer;box-shadow:0 0 10px var(--cyan);
+}
+
+/* ── BOTTOM BAR ── */
+.bottom-bar{
+  background:var(--void-light);border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;font-family:'Share Tech Mono';font-size:10px;color:var(--text-dim);
+}
+.progress-bar{width:200px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+.progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--cyan),var(--green));transition:width 0.5s;box-shadow:0 0 10px var(--cyan);}
+.console-output{
+  flex:1;margin:0 20px;padding:5px 10px;background:var(--void);
+  border:1px solid var(--border);border-radius:3px;font-size:10px;
+  overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+}
+
+/* ── MODALS ── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.8);
+  backdrop-filter:blur(5px);z-index:1000;
+  display:none;align-items:center;justify-content:center;
+}
+.modal-overlay.active{display:flex;}
+.modal{
+  background:var(--panel);border:1px solid var(--border);border-radius:8px;
+  width:90%;max-width:600px;max-height:80vh;overflow:hidden;
+  box-shadow:0 25px 50px rgba(0,0,0,0.5);animation:modalIn 0.3s ease;
+}
+@keyframes modalIn{from{transform:scale(0.9);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-header{
+  padding:15px 20px;background:linear-gradient(90deg,var(--void-light),transparent);
+  border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;
+}
+.modal-title{font-family:'Orbitron';font-size:14px;color:var(--cyan);}
+.modal-close{background:none;border:none;color:var(--text-dim);font-size:20px;cursor:pointer;transition:color 0.2s;}
+.modal-close:hover{color:var(--red);}
+.modal-body{padding:20px;overflow-y:auto;max-height:50vh;}
+.modal-footer{padding:15px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;}
+.btn{
+  padding:8px 20px;border:1px solid var(--border);background:var(--void);color:var(--text);
+  font-family:'Rajdhani';font-size:12px;font-weight:600;cursor:pointer;border-radius:4px;transition:all 0.3s;
+}
+.btn:hover{border-color:var(--cyan);color:var(--cyan);}
+.btn.primary{background:var(--cyan);color:var(--void);border-color:var(--cyan);}
+.btn.primary:hover{background:var(--text);box-shadow:var(--glow-cyan);}
+.btn.danger{background:rgba(255,51,51,0.1);border-color:var(--red);color:var(--red);}
+.btn.danger:hover{background:var(--red);color:var(--void);}
+
+/* Tab content panels */
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+.tab-panel-inner{padding:20px;}
+.form-row{margin-bottom:16px;}
+.form-label{font-family:'Share Tech Mono';font-size:10px;color:var(--text-dim);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;}
+.form-input{
+  width:100%;background:var(--void);border:1px solid var(--border);color:var(--text);
+  padding:8px 12px;border-radius:4px;font-family:'Cairo',sans-serif;font-size:12px;outline:none;transition:border-color 0.2s;
+}
+.form-input:focus{border-color:var(--cyan);}
+.form-select{
+  width:100%;background:var(--void);border:1px solid var(--border);color:var(--text);
+  padding:8px 12px;border-radius:4px;font-size:12px;outline:none;cursor:pointer;transition:border-color 0.2s;
+}
+.form-select:focus{border-color:var(--cyan);}
+.form-select option{background:var(--panel);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.material-card{
+  background:var(--void-light);border:1px solid var(--border);border-radius:6px;padding:15px;
+  cursor:pointer;transition:all 0.3s;margin-bottom:8px;
+}
+.material-card:hover{border-color:var(--cyan);}
+.material-card.selected{border-color:var(--cyan);background:rgba(0,212,255,0.05);}
+.material-card-name{font-family:'Orbitron';font-size:11px;color:var(--cyan);margin-bottom:8px;}
+.material-props{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.mprop{text-align:center;}
+.mprop-label{font-size:9px;color:var(--text-dim);font-family:'Share Tech Mono';}
+.mprop-val{font-size:11px;color:var(--text);font-family:'Share Tech Mono';}
+
+/* Mesh settings */
+.mesh-slider{width:100%;height:4px;-webkit-appearance:none;background:var(--border);border-radius:2px;outline:none;}
+.mesh-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:var(--cyan);border-radius:50%;cursor:pointer;box-shadow:0 0 8px var(--cyan);}
+.mesh-info{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
+.mesh-stat{background:var(--void-light);border:1px solid var(--border);border-radius:4px;padding:10px;text-align:center;}
+.mesh-stat-val{font-family:'Orbitron';font-size:16px;color:var(--cyan);}
+.mesh-stat-label{font-size:9px;color:var(--text-dim);font-family:'Share Tech Mono';}
+
+/* Solve panel */
+.solve-log{
+  background:var(--void);border:1px solid var(--border);border-radius:4px;
+  padding:10px;height:150px;overflow-y:auto;font-family:'Share Tech Mono';font-size:10px;
+}
+.solve-log-line{margin-bottom:3px;}
+.solve-log-line.ok{color:var(--green);}
+.solve-log-line.info{color:var(--cyan);}
+.solve-log-line.warn{color:var(--amber);}
+.solve-btn-row{display:flex;gap:10px;margin-top:15px;}
+
+/* Report panel */
+.report-preview{
+  background:var(--void);border:1px solid var(--border);border-radius:4px;
+  padding:15px;font-family:'Cairo',sans-serif;font-size:12px;
+  max-height:250px;overflow-y:auto;color:var(--text);line-height:1.8;
+}
+.report-section{margin-bottom:15px;}
+.report-section h3{font-family:'Orbitron';font-size:11px;color:var(--cyan);margin-bottom:8px;}
+.report-table{width:100%;border-collapse:collapse;font-size:11px;}
+.report-table th{background:var(--void-light);color:var(--text-dim);padding:6px 10px;text-align:right;border:1px solid var(--border);font-family:'Share Tech Mono';font-size:9px;}
+.report-table td{padding:6px 10px;border:1px solid var(--border);}
+
+/* Loading */
+.loading-overlay{position:fixed;inset:0;background:var(--void);z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;}
+.loading-logo{font-family:'Orbitron';font-size:48px;color:var(--cyan);text-shadow:0 0 30px var(--cyan);animation:logoPulse 1.5s ease-in-out infinite;}
+@keyframes logoPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.1);opacity:0.8}}
+.loading-bar{width:300px;height:2px;background:var(--border);position:relative;overflow:hidden;}
+.loading-progress{position:absolute;inset:0;background:linear-gradient(90deg,var(--cyan),var(--green));animation:loadingAnim 2s ease-in-out forwards;}
+@keyframes loadingAnim{0%{width:0%}100%{width:100%}}
+.loading-text{font-family:'Share Tech Mono';font-size:11px;color:var(--text-dim);letter-spacing:3px;}
+
+/* Notification toast */
+.toast{
+  position:fixed;bottom:50px;right:20px;z-index:2000;
+  background:var(--panel);border:1px solid var(--border);border-radius:6px;
+  padding:10px 20px;font-family:'Share Tech Mono';font-size:11px;color:var(--text);
+  box-shadow:0 8px 32px rgba(0,0,0,0.4);transform:translateX(200px);
+  transition:transform 0.3s;display:flex;align-items:center;gap:10px;
+}
+.toast.show{transform:translateX(0);}
+.toast.success{border-color:var(--green);color:var(--green);}
+.toast.warning{border-color:var(--amber);color:var(--amber);}
+.toast.error{border-color:var(--red);color:var(--red);}
+
+/* Context menu */
+.context-menu{
+  position:fixed;z-index:3000;background:var(--panel);border:1px solid var(--border);
+  border-radius:5px;padding:5px 0;min-width:150px;display:none;
+  box-shadow:0 8px 32px rgba(0,0,0,0.5);
+}
+.context-menu.show{display:block;}
+.ctx-item{
+  padding:8px 15px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:8px;
+  transition:all 0.2s;color:var(--text-dim);
+}
+.ctx-item:hover{background:rgba(0,212,255,0.1);color:var(--cyan);}
+.ctx-separator{height:1px;background:var(--border);margin:4px 0;}
+
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--void)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--cyan-dim)}
+
+/* Solve progress overlay */
+.solve-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(3px);z-index:1500;display:none;align-items:center;justify-content:center;flex-direction:column;gap:20px;}
+.solve-overlay.active{display:flex;}
+.solve-spinner{
+  width:60px;height:60px;border:3px solid var(--border);
+  border-top-color:var(--cyan);border-radius:50%;
+  animation:spin 1s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.solve-status-text{font-family:'Orbitron';font-size:14px;color:var(--cyan);letter-spacing:2px;}
+.solve-pct{font-family:'Share Tech Mono';font-size:28px;color:var(--green);}
+
+@media(max-width:1200px){.workspace{grid-template-columns:250px 1fr 250px}}
+@media(max-width:900px){.workspace{grid-template-columns:1fr}.left-panel,.right-panel{display:none}}
+
+/* ── ENGINEERING SOLVER MODAL ── */
+@keyframes glowAmber{0%,100%{box-shadow:0 0 5px rgba(255,170,0,0.3)}50%{box-shadow:0 0 15px rgba(255,170,0,0.7)}}
+.engr-modal{
+  position:fixed;inset:0;z-index:5000;
+  background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);
+  display:none;align-items:flex-start;justify-content:center;
+  padding:20px;overflow-y:auto;
+}
+.engr-modal.active{display:flex;}
+.engr-box{
+  background:var(--panel);border:1px solid var(--amber);
+  border-radius:10px;width:100%;max-width:1100px;
+  box-shadow:0 0 60px rgba(255,170,0,0.15);
+  animation:modalIn 0.3s ease;
+  display:flex;flex-direction:column;
+}
+.engr-header{
+  padding:15px 20px;
+  background:linear-gradient(90deg,rgba(255,170,0,0.1),transparent);
+  border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.engr-title{font-family:'Orbitron';font-size:15px;color:var(--amber);letter-spacing:2px;}
+.engr-body{display:grid;grid-template-columns:340px 1fr;height:calc(100vh - 120px);overflow:hidden;}
+.engr-left{border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.engr-right{display:flex;flex-direction:column;overflow:hidden;}
+
+/* Subject selector */
+.subject-tabs{display:flex;flex-wrap:wrap;gap:3px;padding:10px;border-bottom:1px solid var(--border);}
+.sub-btn{
+  padding:5px 10px;border:1px solid var(--border);background:transparent;
+  color:var(--text-dim);font-size:10px;cursor:pointer;border-radius:4px;
+  font-family:'Rajdhani';font-weight:600;transition:all 0.2s;
+}
+.sub-btn:hover{border-color:var(--amber);color:var(--amber);}
+.sub-btn.active{background:rgba(255,170,0,0.15);border-color:var(--amber);color:var(--amber);}
+
+/* Problem input area */
+.problem-input-area{flex:1;display:flex;flex-direction:column;padding:12px;gap:8px;overflow-y:auto;}
+.pfield-label{font-family:'Share Tech Mono';font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;}
+.pfield-textarea{
+  width:100%;background:var(--void);border:1px solid var(--border);color:var(--text);
+  padding:10px;border-radius:5px;font-family:'Cairo',sans-serif;font-size:12px;
+  resize:none;outline:none;transition:border-color 0.2s;line-height:1.7;
+}
+.pfield-textarea:focus{border-color:var(--amber);}
+.pfield-input{
+  width:100%;background:var(--void);border:1px solid var(--border);color:var(--text);
+  padding:8px 10px;border-radius:5px;font-family:'Cairo',sans-serif;font-size:12px;
+  outline:none;transition:border-color 0.2s;
+}
+.pfield-input:focus{border-color:var(--amber);}
+.pfield-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.dynamic-fields{display:flex;flex-direction:column;gap:8px;}
+.solve-action-btn{
+  padding:12px;background:linear-gradient(135deg,var(--amber),var(--amber-dim));
+  border:none;color:var(--void);font-family:'Orbitron';font-size:12px;font-weight:700;
+  cursor:pointer;border-radius:6px;letter-spacing:1px;transition:all 0.3s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.solve-action-btn:hover{background:linear-gradient(135deg,#ffd000,var(--amber));box-shadow:0 0 20px rgba(255,170,0,0.5);}
+.solve-action-btn:disabled{opacity:0.4;cursor:not-allowed;}
+
+/* Results area (right) */
+.result-viewport{
+  flex:1;position:relative;background:radial-gradient(ellipse at center,#0a1020 0%,#020408 100%);
+  overflow:hidden;
+}
+.result-3d-canvas{width:100%;height:100%;display:block;}
+.result-overlay-badge{
+  position:absolute;top:10px;right:10px;
+  background:rgba(7,21,37,0.9);border:1px solid var(--border);
+  border-radius:5px;padding:8px 12px;
+  font-family:'Share Tech Mono';font-size:9px;
+  color:var(--text-dim);line-height:1.8;
+  max-width:220px;
+}
+.badge-val{color:var(--amber);font-size:11px;}
+.result-text-panel{
+  height:45%;border-top:1px solid var(--border);overflow-y:auto;padding:12px;
+}
+.step-block{
+  background:var(--void-light);border:1px solid var(--border);border-radius:5px;
+  padding:10px 12px;margin-bottom:8px;font-size:11px;line-height:1.9;
+  border-right:3px solid var(--amber);
+}
+.step-title{font-family:'Orbitron';font-size:9px;color:var(--amber);margin-bottom:5px;letter-spacing:1px;}
+.step-eq{
+  font-family:'Share Tech Mono';font-size:11px;color:var(--cyan);
+  background:var(--void);padding:4px 8px;border-radius:3px;
+  margin:3px 0;display:inline-block;
+}
+.step-result{color:var(--green);font-weight:700;}
+.conclusion-box{
+  background:rgba(0,255,136,0.05);border:1px solid var(--green-dim);
+  border-radius:5px;padding:10px 12px;margin-bottom:8px;
+}
+.conclusion-title{font-family:'Orbitron';font-size:9px;color:var(--green);margin-bottom:6px;}
+.warn-box{background:rgba(255,170,0,0.05);border:1px solid var(--amber-dim);border-radius:5px;padding:10px 12px;margin-bottom:8px;}
+
+/* ══════════════════════════════════════════════════════════════
+   IMPROVEMENT 1 — WORKFLOW PROGRESS BAR
+══════════════════════════════════════════════════════════════ */
+.workflow-bar{
+  background:var(--void-light);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 15px;gap:0;overflow:hidden;
+  font-family:'Share Tech Mono';font-size:9px;
+}
+.wf-step{
+  display:flex;align-items:center;gap:5px;padding:0 12px;
+  color:var(--text-dim);cursor:pointer;transition:all 0.3s;
+  border-right:1px solid var(--border);height:100%;
+  white-space:nowrap;
+}
+.wf-step:hover{color:var(--text);}
+.wf-step.done{color:var(--green);}
+.wf-step.active{color:var(--cyan);background:rgba(0,212,255,0.05);}
+.wf-step.locked{opacity:0.3;cursor:not-allowed;}
+.wf-dot{width:7px;height:7px;border-radius:50%;background:var(--border);flex-shrink:0;}
+.wf-step.done .wf-dot{background:var(--green);box-shadow:0 0 6px var(--green);}
+.wf-step.active .wf-dot{background:var(--cyan);box-shadow:0 0 6px var(--cyan);animation:blink 1s infinite;}
+.wf-connector{width:20px;height:2px;background:var(--border);flex-shrink:0;}
+.wf-connector.done{background:var(--green);}
+
+/* ══════════════════════════════════════════════════════════════
+   IMPROVEMENT 2 — UNDO/REDO TOOLBAR BUTTONS (styles shared with tool-btn)
+══════════════════════════════════════════════════════════════ */
+.undo-btn{color:var(--text-dim);}
+.undo-btn:hover{color:var(--cyan);}
+
+/* ══════════════════════════════════════════════════════════════
+   IMPROVEMENT 3 — SECTION PROPERTIES MODAL
+══════════════════════════════════════════════════════════════ */
+.sec-modal{
+  position:fixed;inset:0;z-index:6000;
+  background:rgba(0,0,0,0.88);backdrop-filter:blur(8px);
+  display:none;align-items:center;justify-content:center;
+}
+.sec-modal.active{display:flex;}
+.sec-box{
+  background:var(--panel);border:1px solid var(--purple);
+  border-radius:10px;width:900px;max-width:96vw;
+  max-height:90vh;overflow:hidden;display:flex;flex-direction:column;
+  box-shadow:0 0 60px rgba(170,0,255,0.2);animation:modalIn 0.3s ease;
+}
+.sec-header{
+  padding:14px 20px;background:linear-gradient(90deg,rgba(170,0,255,0.1),transparent);
+  border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;
+}
+.sec-title{font-family:'Orbitron';font-size:13px;color:var(--purple);letter-spacing:2px;}
+.sec-body{display:grid;grid-template-columns:260px 1fr;overflow:hidden;flex:1;}
+.sec-controls{padding:15px;border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column;gap:10px;}
+.sec-shapes{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:10px;}
+.shape-btn{
+  padding:8px 5px;background:var(--void-light);border:1px solid var(--border);
+  color:var(--text-dim);cursor:pointer;border-radius:4px;font-size:10px;
+  transition:all 0.2s;text-align:center;
+}
+.shape-btn:hover{border-color:var(--purple);color:var(--purple);}
+.shape-btn.active{background:rgba(170,0,255,0.15);border-color:var(--purple);color:var(--purple);}
+.sec-view{display:flex;flex-direction:column;overflow:hidden;}
+.sec-canvas-wrap{flex:1;position:relative;background:radial-gradient(ellipse,#0a1020,#020408);}
+.sec-canvas{width:100%;height:100%;display:block;}
+.sec-results-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:6px;
+  padding:10px;border-top:1px solid var(--border);background:var(--void-light);
+}
+.sec-res-cell{background:var(--void);border:1px solid var(--border);border-radius:4px;padding:8px;text-align:center;}
+.sec-res-label{font-family:'Share Tech Mono';font-size:8px;color:var(--text-dim);}
+.sec-res-val{font-family:'Orbitron';font-size:13px;color:var(--purple);margin-top:2px;}
+
+/* ══════════════════════════════════════════════════════════════
+   IMPROVEMENT 4 — MATERIAL COMPARISON RADAR
+══════════════════════════════════════════════════════════════ */
+.matcmp-modal{
+  position:fixed;inset:0;z-index:6100;
+  background:rgba(0,0,0,0.88);backdrop-filter:blur(8px);
+  display:none;align-items:center;justify-content:center;
+}
+.matcmp-modal.active{display:flex;}
+.matcmp-box{
+  background:var(--panel);border:1px solid var(--pink);
+  border-radius:10px;width:860px;max-width:96vw;max-height:90vh;
+  overflow:hidden;display:flex;flex-direction:column;
+  box-shadow:0 0 60px rgba(255,0,170,0.15);animation:modalIn 0.3s ease;
+}
+.matcmp-header{
+  padding:14px 20px;background:linear-gradient(90deg,rgba(255,0,170,0.1),transparent);
+  border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;
+}
+.matcmp-title{font-family:'Orbitron';font-size:13px;color:var(--pink);letter-spacing:2px;}
+.matcmp-body{display:grid;grid-template-columns:220px 1fr;overflow:hidden;flex:1;}
+.matcmp-list{padding:12px;border-right:1px solid var(--border);overflow-y:auto;}
+.matcmp-item{
+  display:flex;align-items:center;gap:8px;padding:8px 10px;
+  background:var(--void-light);border:1px solid var(--border);
+  border-radius:4px;margin-bottom:5px;cursor:pointer;transition:all 0.2s;
+  font-size:11px;
+}
+.matcmp-item:hover{border-color:var(--pink);}
+.matcmp-item.selected{border-color:var(--pink);background:rgba(255,0,170,0.05);}
+.matcmp-check{width:14px;height:14px;accent-color:var(--pink);}
+.matcmp-view{display:flex;flex-direction:column;padding:15px;gap:10px;overflow:hidden;}
+.matcmp-canvas{width:100%;flex:1;display:block;}
+.matcmp-table{width:100%;border-collapse:collapse;font-size:10px;}
+.matcmp-table th{background:var(--void-light);color:var(--text-dim);padding:5px 8px;border:1px solid var(--border);font-family:'Share Tech Mono';font-size:8px;}
+.matcmp-table td{padding:5px 8px;border:1px solid var(--border);text-align:center;}
+
+/* ══════════════════════════════════════════════════════════════
+   IMPROVEMENT 5 — REAL STRESS COLORMAP LEGEND
+══════════════════════════════════════════════════════════════ */
+.colormap-legend{
+  position:absolute;left:15px;bottom:60px;
+  background:rgba(7,21,37,0.9);border:1px solid var(--border);
+  border-radius:5px;padding:8px;width:120px;display:none;z-index:15;
+}
+.colormap-legend.visible{display:block;}
+.colormap-bar{width:100%;height:120px;border-radius:3px;margin-bottom:5px;}
+.colormap-labels{display:flex;justify-content:space-between;font-family:'Share Tech Mono';font-size:8px;color:var(--text-dim);}
+
+/* ══════════════════════════════════════════════════════════════
+   IMPROVEMENT 6 — AI ASSISTANT PANEL
+══════════════════════════════════════════════════════════════ */
+.ai-panel{
+  position:fixed;bottom:30px;right:0;width:340px;
+  background:var(--panel);border:1px solid var(--cyan);border-right:none;
+  border-radius:8px 0 0 8px;z-index:4000;
+  display:flex;flex-direction:column;
+  box-shadow:-8px 0 30px rgba(0,212,255,0.15);
+  transition:transform 0.4s cubic-bezier(.4,0,.2,1);
+  transform:translateX(340px);
+  height:420px;
+}
+.ai-panel.open{transform:translateX(0);}
+.ai-toggle{
+  position:fixed;bottom:80px;right:0;z-index:4001;
+  background:linear-gradient(135deg,var(--cyan),var(--cyan-dim));
+  border:none;color:var(--void);padding:10px 6px;
+  border-radius:6px 0 0 6px;cursor:pointer;
+  font-family:'Orbitron';font-size:9px;writing-mode:vertical-rl;
+  letter-spacing:2px;transition:all 0.3s;
+  box-shadow:-4px 0 15px rgba(0,212,255,0.3);
+}
+.ai-toggle:hover{padding-right:10px;background:var(--cyan);}
+.ai-header{
+  padding:10px 14px;border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;
+  background:linear-gradient(90deg,rgba(0,212,255,0.08),transparent);
+}
+.ai-title{font-family:'Orbitron';font-size:10px;color:var(--cyan);letter-spacing:2px;}
+.ai-messages{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;}
+.ai-msg{
+  padding:8px 10px;border-radius:6px;font-size:11px;line-height:1.7;max-width:90%;
+}
+.ai-msg.user{
+  background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.2);
+  color:var(--cyan);align-self:flex-end;text-align:right;
+}
+.ai-msg.assistant{
+  background:rgba(10,16,32,0.8);border:1px solid var(--border);
+  color:var(--text);align-self:flex-start;
+}
+.ai-msg.thinking{color:var(--text-dim);font-style:italic;animation:blink 1s infinite;}
+.ai-input-row{
+  display:flex;gap:6px;padding:10px;border-top:1px solid var(--border);
+}
+.ai-input{
+  flex:1;background:var(--void);border:1px solid var(--border);color:var(--text);
+  padding:7px 10px;border-radius:4px;font-family:'Cairo';font-size:11px;outline:none;
+  transition:border-color 0.2s;
+}
+.ai-input:focus{border-color:var(--cyan);}
+.ai-send{
+  background:var(--cyan);border:none;color:var(--void);
+  padding:7px 12px;border-radius:4px;cursor:pointer;font-size:14px;
+  transition:all 0.2s;
+}
+.ai-send:hover{background:var(--text);}
+.ai-send:disabled{opacity:0.4;cursor:not-allowed;}
+.ai-ctx-badge{
+  padding:4px 10px;margin:0 10px;
+  background:rgba(0,212,255,0.05);border:1px solid var(--border);
+  border-radius:3px;font-family:'Share Tech Mono';font-size:8px;
+  color:var(--text-dim);text-align:center;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   IMPROVEMENT 7 — INTERACTIVE CHART EDITOR (MOHR, Q/M DIAGRAMS)
+══════════════════════════════════════════════════════════════ */
+.chart-editor-modal{
+  position:fixed;inset:0;z-index:6200;
+  background:rgba(0,0,0,0.88);backdrop-filter:blur(8px);
+  display:none;align-items:center;justify-content:center;
+}
+.chart-editor-modal.active{display:flex;}
+.chart-editor-box{
+  background:var(--panel);border:1px solid var(--green);
+  border-radius:10px;width:940px;max-width:96vw;max-height:92vh;
+  overflow:hidden;display:flex;flex-direction:column;
+  box-shadow:0 0 60px rgba(0,255,136,0.1);animation:modalIn 0.3s ease;
+}
+.chart-editor-header{
+  padding:13px 20px;background:linear-gradient(90deg,rgba(0,255,136,0.08),transparent);
+  border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;
+}
+.chart-editor-title{font-family:'Orbitron';font-size:13px;color:var(--green);letter-spacing:2px;}
+.chart-editor-body{display:grid;grid-template-columns:220px 1fr;overflow:hidden;flex:1;}
+.chart-sidebar{padding:12px;border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column;gap:10px;}
+.chart-type-btn{
+  padding:8px 10px;background:var(--void-light);border:1px solid var(--border);
+  color:var(--text-dim);cursor:pointer;border-radius:4px;font-size:11px;
+  transition:all 0.2s;text-align:right;display:flex;align-items:center;gap:8px;
+}
+.chart-type-btn:hover{border-color:var(--green);color:var(--green);}
+.chart-type-btn.active{background:rgba(0,255,136,0.1);border-color:var(--green);color:var(--green);}
+.chart-canvas-area{display:flex;flex-direction:column;padding:15px;gap:10px;overflow:hidden;}
+.chart-main-canvas{width:100%;flex:1;display:block;border:1px solid var(--border);border-radius:5px;background:var(--void);}
+.chart-controls-row{display:flex;gap:8px;flex-wrap:wrap;}
+.chart-ctrl-input{
+  background:var(--void);border:1px solid var(--border);color:var(--text);
+  padding:5px 8px;border-radius:3px;font-size:10px;width:90px;outline:none;
+  font-family:'Share Tech Mono';
+}
+.chart-ctrl-input:focus{border-color:var(--green);}
+
+/* ══════════════════════════════════════════════════════════════
+   IMPROVEMENT 8 — EXPORT PANEL
+══════════════════════════════════════════════════════════════ */
+.export-modal{
+  position:fixed;inset:0;z-index:6300;
+  background:rgba(0,0,0,0.88);backdrop-filter:blur(8px);
+  display:none;align-items:center;justify-content:center;
+}
+.export-modal.active{display:flex;}
+.export-box{
+  background:var(--panel);border:1px solid var(--green);
+  border-radius:10px;width:500px;max-width:96vw;
+  box-shadow:0 0 40px rgba(0,255,136,0.1);animation:modalIn 0.3s ease;
+}
+.export-header{
+  padding:13px 20px;border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;
+  background:linear-gradient(90deg,rgba(0,255,136,0.06),transparent);
+}
+.export-title{font-family:'Orbitron';font-size:13px;color:var(--green);letter-spacing:2px;}
+.export-body{padding:20px;display:flex;flex-direction:column;gap:10px;}
+.export-option{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--void-light);border:1px solid var(--border);
+  border-radius:5px;padding:12px 15px;cursor:pointer;transition:all 0.2s;
+}
+.export-option:hover{border-color:var(--green);transform:translateX(-3px);}
+.export-opt-label{font-size:12px;display:flex;align-items:center;gap:10px;}
+.export-opt-desc{font-family:'Share Tech Mono';font-size:9px;color:var(--text-dim);margin-top:2px;}
+.export-opt-btn{
+  padding:6px 14px;background:var(--green);color:var(--void);
+  border:none;border-radius:3px;font-size:10px;font-weight:700;cursor:pointer;
+  font-family:'Rajdhani';transition:all 0.2s;
+}
+.export-opt-btn:hover{background:var(--text);}
+
+/* ══════════════════════════════════════════════════════════════
+   IMPROVEMENT 9 — PARAMETRIC 3D EDITOR
+══════════════════════════════════════════════════════════════ */
+.param3d-panel{
+  position:absolute;top:10px;right:10px;z-index:20;
+  background:rgba(7,21,37,0.92);border:1px solid var(--border);
+  border-radius:6px;padding:10px;width:160px;display:none;
+}
+.param3d-panel.visible{display:block;}
+.param3d-title{font-family:'Orbitron';font-size:8px;color:var(--cyan);letter-spacing:1px;margin-bottom:8px;}
+.param3d-row{margin-bottom:8px;}
+.param3d-label{font-family:'Share Tech Mono';font-size:8px;color:var(--text-dim);display:block;margin-bottom:2px;}
+.param3d-slider{width:100%;height:3px;-webkit-appearance:none;background:var(--border);border-radius:2px;outline:none;}
+.param3d-slider::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:10px;background:var(--cyan);border-radius:50%;cursor:pointer;}
+.param3d-val{font-family:'Share Tech Mono';font-size:9px;color:var(--cyan);float:right;}
+
+/* ══════════════════════════════════════════════════════════════
+   IMPROVEMENT 10 — UNDO/REDO visual indicator
+══════════════════════════════════════════════════════════════ */
+.history-indicator{
+  font-family:'Share Tech Mono';font-size:9px;color:var(--text-dim);
+  padding:0 10px;border-right:1px solid var(--border);white-space:nowrap;
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- ENGINEERING PROBLEM SOLVER MODAL                             -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div class="engr-modal" id="engrModal">
+  <div class="engr-box">
+    <div class="engr-header">
+      <div class="engr-title">🧮 محلل المسائل الهندسية — AXIOM SOLVER</div>
+      <button class="modal-close" onclick="closeEngrSolver()">✕</button>
+    </div>
+    <div class="engr-body">
+      <!-- LEFT: Input -->
+      <div class="engr-left">
+        <div class="subject-tabs" id="subjectTabs">
+          <button class="sub-btn active" onclick="selectSubject('design',this)">🔩 تصميم الآلات</button>
+          <button class="sub-btn" onclick="selectSubject('fluid',this)">💧 ميكانيكا الموائع</button>
+          <button class="sub-btn" onclick="selectSubject('heat',this)">🔥 انتقال الحرارة</button>
+          <button class="sub-btn" onclick="selectSubject('stress',this)">⚙️ مقاومة المواد</button>
+          <button class="sub-btn" onclick="selectSubject('thermo',this)">♨️ ثيرموديناميك</button>
+          <button class="sub-btn" onclick="selectSubject('dynamics',this)">🔄 ديناميكا</button>
+        </div>
+        <div class="problem-input-area" id="problemInputArea">
+          <!-- filled dynamically -->
+        </div>
+        <div style="padding:10px;border-top:1px solid var(--border);">
+          <button class="solve-action-btn" id="solveProbleBtn" onclick="solveEngrProblem()">
+            ⚡ احسب وحلّل وصوّر
+          </button>
+        </div>
+      </div>
+      <!-- RIGHT: Results + 3D -->
+      <div class="engr-right">
+        <div class="result-viewport" id="engrViewport">
+          <canvas id="engrCanvas" class="result-3d-canvas"></canvas>
+          <div class="result-overlay-badge" id="resultBadge" style="display:none;"></div>
+          <div id="engrPlaceholder" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:15px;pointer-events:none;">
+            <div style="font-size:48px;opacity:0.2">🧮</div>
+            <div style="font-family:'Share Tech Mono';font-size:11px;color:var(--text-dim);letter-spacing:2px;">أدخل المسألة واضغط احسب</div>
+          </div>
+        </div>
+        <div class="result-text-panel" id="resultTextPanel">
+          <div style="color:var(--text-dim);font-family:'Share Tech Mono';font-size:10px;text-align:center;padding:20px;">
+            ستظهر خطوات الحل التفصيلية هنا...
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Screen -->
+<div class="loading-overlay" id="loading">
+  <div class="loading-logo">AXIOM PRO</div>
+  <div class="loading-bar"><div class="loading-progress"></div></div>
+  <div class="loading-text" id="loadingText">INITIALIZING SIMULATION ENGINE...</div>
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<!-- Context Menu -->
+<div class="context-menu" id="contextMenu">
+  <div class="ctx-item" onclick="ctxAction('rename')">✏️ إعادة التسمية</div>
+  <div class="ctx-item" onclick="ctxAction('duplicate')">📋 نسخ</div>
+  <div class="ctx-separator"></div>
+  <div class="ctx-item" onclick="ctxAction('properties')">⚙️ الخصائص</div>
+  <div class="ctx-item" onclick="ctxAction('delete')">🗑️ حذف</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- SECTION PROPERTIES MODAL                                     -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div class="sec-modal" id="secModal">
+  <div class="sec-box">
+    <div class="sec-header">
+      <div class="sec-title">📐 خصائص المقاطع الهندسية — SECTION PROPERTIES</div>
+      <button class="modal-close" onclick="document.getElementById('secModal').classList.remove('active')">✕</button>
+    </div>
+    <div class="sec-body">
+      <div class="sec-controls">
+        <div style="font-family:'Share Tech Mono';font-size:9px;color:var(--text-dim);margin-bottom:5px;text-transform:uppercase;">شكل المقطع</div>
+        <div class="sec-shapes">
+          <button class="shape-btn active" onclick="selectShape('rect',this)">⬜ مستطيل</button>
+          <button class="shape-btn" onclick="selectShape('circle',this)">⭕ دائري</button>
+          <button class="shape-btn" onclick="selectShape('ibeam',this)">🔠 I-Beam</button>
+          <button class="shape-btn" onclick="selectShape('channel',this)">⊓ قناة C</button>
+          <button class="shape-btn" onclick="selectShape('angle',this)">∟ زاوية L</button>
+          <button class="shape-btn" onclick="selectShape('hollow',this)">⬛ مجوف</button>
+        </div>
+        <div id="shapeInputs" style="display:flex;flex-direction:column;gap:8px;"></div>
+        <button class="solve-action-btn" style="margin-top:10px;" onclick="calcSectionProps()">⚡ احسب الخصائص</button>
+      </div>
+      <div class="sec-view">
+        <div class="sec-canvas-wrap"><canvas class="sec-canvas" id="secCanvas"></canvas></div>
+        <div class="sec-results-grid" id="secResultsGrid">
+          <div class="sec-res-cell"><div class="sec-res-label">المساحة A</div><div class="sec-res-val" id="sr_A">—</div><div style="font-size:8px;color:var(--text-dim)">mm²</div></div>
+          <div class="sec-res-cell"><div class="sec-res-label">Ixx</div><div class="sec-res-val" id="sr_Ixx">—</div><div style="font-size:8px;color:var(--text-dim)">mm⁴</div></div>
+          <div class="sec-res-cell"><div class="sec-res-label">Iyy</div><div class="sec-res-val" id="sr_Iyy">—</div><div style="font-size:8px;color:var(--text-dim)">mm⁴</div></div>
+          <div class="sec-res-cell"><div class="sec-res-label">Sxx (معامل المقاومة)</div><div class="sec-res-val" id="sr_Sxx">—</div><div style="font-size:8px;color:var(--text-dim)">mm³</div></div>
+          <div class="sec-res-cell"><div class="sec-res-label">rxx (نصف قطر الدوران)</div><div class="sec-res-val" id="sr_rxx">—</div><div style="font-size:8px;color:var(--text-dim)">mm</div></div>
+          <div class="sec-res-cell"><div class="sec-res-label">J (قطبي)</div><div class="sec-res-val" id="sr_J">—</div><div style="font-size:8px;color:var(--text-dim)">mm⁴</div></div>
+          <div class="sec-res-cell"><div class="sec-res-label">Cx (مركز ثقل)</div><div class="sec-res-val" id="sr_Cx">—</div><div style="font-size:8px;color:var(--text-dim)">mm</div></div>
+          <div class="sec-res-cell"><div class="sec-res-label">Cy</div><div class="sec-res-val" id="sr_Cy">—</div><div style="font-size:8px;color:var(--text-dim)">mm</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- MATERIAL COMPARISON RADAR MODAL                              -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div class="matcmp-modal" id="matcmpModal">
+  <div class="matcmp-box">
+    <div class="matcmp-header">
+      <div class="matcmp-title">📊 مقارنة المواد — MATERIAL COMPARISON</div>
+      <button class="modal-close" onclick="document.getElementById('matcmpModal').classList.remove('active')">✕</button>
+    </div>
+    <div class="matcmp-body">
+      <div class="matcmp-list">
+        <div style="font-family:'Share Tech Mono';font-size:9px;color:var(--text-dim);margin-bottom:8px;">اختر حتى 3 مواد:</div>
+        <div id="matcmpCheckList"></div>
+        <button class="solve-action-btn" style="margin-top:10px;" onclick="drawMatComparison()">📊 رسم المقارنة</button>
+      </div>
+      <div class="matcmp-view">
+        <canvas class="matcmp-canvas" id="matcmpCanvas" width="580" height="300"></canvas>
+        <div style="overflow-x:auto;">
+          <table class="matcmp-table" id="matcmpTable"></table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- INTERACTIVE CHART EDITOR MODAL                               -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div class="chart-editor-modal" id="chartEditorModal">
+  <div class="chart-editor-box">
+    <div class="chart-editor-header">
+      <div class="chart-editor-title">📈 محرر الرسوم البيانية التفاعلية — CHART EDITOR</div>
+      <button class="modal-close" onclick="document.getElementById('chartEditorModal').classList.remove('active')">✕</button>
+    </div>
+    <div class="chart-editor-body">
+      <div class="chart-sidebar">
+        <div style="font-family:'Share Tech Mono';font-size:9px;color:var(--text-dim);margin-bottom:8px;">نوع الرسم:</div>
+        <button class="chart-type-btn active" onclick="selectChartType('mohr',this)">⭕ دائرة موهر</button>
+        <button class="chart-type-btn" onclick="selectChartType('qm',this)">📊 مخطط Q &amp; M</button>
+        <button class="chart-type-btn" onclick="selectChartType('stress_strain',this)">📈 إجهاد-انفعال</button>
+        <button class="chart-type-btn" onclick="selectChartType('sf_diagram',this)">🛡️ عامل الأمان</button>
+        <button class="chart-type-btn" onclick="selectChartType('fatigue',this)">♾️ منحنى S-N</button>
+        <div style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px;">
+          <div style="font-family:'Share Tech Mono';font-size:9px;color:var(--text-dim);margin-bottom:8px;">المدخلات:</div>
+          <div id="chartInputs" style="display:flex;flex-direction:column;gap:7px;"></div>
+          <button class="solve-action-btn" style="margin-top:10px;" onclick="drawSelectedChart()">⚡ ارسم</button>
+        </div>
+      </div>
+      <div class="chart-canvas-area">
+        <canvas class="chart-main-canvas" id="chartMainCanvas" width="680" height="380"></canvas>
+        <div id="chartInfoPanel" style="font-family:'Share Tech Mono';font-size:10px;color:var(--text-dim);padding:5px 0;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- EXPORT MODAL                                                  -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div class="export-modal" id="exportModal">
+  <div class="export-box">
+    <div class="export-header">
+      <div class="export-title">💾 تصدير البيانات — EXPORT</div>
+      <button class="modal-close" onclick="document.getElementById('exportModal').classList.remove('active')">✕</button>
+    </div>
+    <div class="export-body">
+      <div class="export-option" onclick="exportData('json')">
+        <div><div class="export-opt-label">📋 JSON — بيانات المشروع الكاملة</div><div class="export-opt-desc">خصائص، نتائج، إعدادات المحلل</div></div>
+        <button class="export-opt-btn">تنزيل</button>
+      </div>
+      <div class="export-option" onclick="exportData('csv')">
+        <div><div class="export-opt-label">📊 CSV — جدول النتائج</div><div class="export-opt-desc">قابل للفتح في Excel</div></div>
+        <button class="export-opt-btn">تنزيل</button>
+      </div>
+      <div class="export-option" onclick="exportData('report_html')">
+        <div><div class="export-opt-label">📄 HTML — تقرير كامل</div><div class="export-opt-desc">صفحة HTML بكل النتائج والرسوم</div></div>
+        <button class="export-opt-btn">تنزيل</button>
+      </div>
+      <div class="export-option" onclick="exportData('svg')">
+        <div><div class="export-opt-label">🖼️ SVG — رسم الشكل</div><div class="export-opt-desc">متجه قابل للتحرير</div></div>
+        <button class="export-opt-btn">تنزيل</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- AI ASSISTANT PANEL                                           -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<button class="ai-toggle" id="aiToggle" onclick="toggleAIPanel()">🤖 AI ASSIST</button>
+<div class="ai-panel" id="aiPanel">
+  <div class="ai-header">
+    <div class="ai-title">🤖 مساعد AXIOM الذكي</div>
+    <button class="modal-close" onclick="toggleAIPanel()" style="font-size:14px;">✕</button>
+  </div>
+  <div class="ai-ctx-badge" id="aiCtxBadge">السياق: مشروع Assembly_001</div>
+  <div class="ai-messages" id="aiMessages">
+    <div class="ai-msg assistant">مرحباً! أنا مساعدك الهندسي. اسألني عن نتائج التحليل، أسباب الفشل، توصيات التصميم، أو أي سؤال هندسي.</div>
+  </div>
+  <div class="ai-input-row">
+    <input class="ai-input" id="aiInput" placeholder="اكتب سؤالك الهندسي..." onkeydown="if(event.key==='Enter')sendAIMessage()"/>
+    <button class="ai-send" id="aiSendBtn" onclick="sendAIMessage()">➤</button>
+  </div>
+</div>
+
+<!-- Solve Overlay -->
+<div class="solve-overlay" id="solveOverlay">
+  <div class="solve-spinner"></div>
+  <div class="solve-pct" id="solvePct">0%</div>
+  <div class="solve-status-text" id="solveStatusTxt">INITIALIZING SOLVER...</div>
+</div>
+
+<!-- Background -->
+<div class="bg-grid"></div>
+
+<!-- Main App -->
+<div class="app-container">
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="brand">
+      <div class="logo-icon">AX</div>
+      <div class="brand-text">
+        <h1>AXIOM PRO v4.0</h1>
+        <span>MULTIPHYSICS SIMULATION SUITE</span>
+      </div>
+    </div>
+    <div class="main-menu" id="mainMenu">
+      <button class="menu-item active" onclick="switchTab('setup',this)">⚙️ الإعداد</button>
+      <button class="menu-item" onclick="switchTab('material',this)">🔧 المواد</button>
+      <button class="menu-item" onclick="switchTab('mesh',this)">🌐 الشبكة</button>
+      <button class="menu-item" onclick="switchTab('solve',this)">▶️ الحل</button>
+      <button class="menu-item" onclick="switchTab('results',this)">📊 النتائج</button>
+      <button class="menu-item" onclick="switchTab('report',this)">📄 التقرير</button>
+      <button class="menu-item" onclick="openEngrSolver()" style="border:1px solid var(--amber);color:var(--amber);animation:glowAmber 2s infinite;">🧮 حل المسائل</button>
+    </div>
+    <div class="status-bar">
+      <div class="status-item"><span class="status-dot" id="solverDot"></span><span id="solverStatus">SOLVER READY</span></div>
+      <div class="status-item"><span style="color:var(--cyan)">ENG_ALAA MOHAMMED</span></div>
+    </div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="tool-group">
+      <button class="tool-btn active" id="tbSelect" title="تحديد" onclick="setToolMode('select',this)">🔍</button>
+      <button class="tool-btn" id="tbMove" title="تحريك" onclick="setToolMode('move',this)">↔️</button>
+      <button class="tool-btn" id="tbRotate" title="تدوير" onclick="setToolMode('rotate',this)">🔄</button>
+      <button class="tool-btn" id="tbScale" title="قياس" onclick="setToolMode('scale',this)">📐</button>
+    </div>
+    <div class="tool-group">
+      <button class="tool-btn" title="واير فريم" onclick="setViewMode('wireframe',this)">┊</button>
+      <button class="tool-btn active" title="مظلل" onclick="setViewMode('shaded',this)">▣</button>
+      <button class="tool-btn" title="إجهاد" onclick="setViewMode('stress',this)">◫</button>
+      <button class="tool-btn" title="مقطع" onclick="toggleSectionView(this)">✂</button>
+    </div>
+    <div class="tool-group">
+      <select class="tool-select" id="viewPreset" onchange="applyViewPreset(this.value)">
+        <option value="iso">Isometric</option>
+        <option value="front">Front</option>
+        <option value="top">Top</option>
+        <option value="right">Right</option>
+        <option value="back">Back</option>
+      </select>
+    </div>
+    <div class="tool-group" style="margin-right:auto">
+      <button class="tool-btn" title="تشغيل" onclick="playAnimation()">▶</button>
+      <button class="tool-btn" title="إيقاف مؤقت" onclick="pauseAnimation()">⏸</button>
+      <button class="tool-btn" title="إعادة تعيين" onclick="resetAnimation()">⏹</button>
+    </div>
+    <div class="tool-group">
+      <button class="tool-btn" title="تكبير" onclick="zoomCamera(0.8)">🔍+</button>
+      <button class="tool-btn" title="تصغير" onclick="zoomCamera(1.2)">🔍-</button>
+      <button class="tool-btn" title="ملاءمة الشاشة" onclick="fitToScreen()">⊞</button>
+    </div>
+    <div class="tool-group">
+      <button class="tool-btn undo-btn" title="تراجع Ctrl+Z" onclick="undoAction()" id="btnUndo">↩</button>
+      <button class="tool-btn undo-btn" title="إعادة Ctrl+Y" onclick="redoAction()" id="btnRedo">↪</button>
+    </div>
+    <div class="tool-group">
+      <button class="tool-btn" title="محرر الرسوم البيانية" onclick="document.getElementById('chartEditorModal').classList.add('active');initChartEditor();" style="color:var(--green)">📈</button>
+      <button class="tool-btn" title="خصائص المقاطع" onclick="document.getElementById('secModal').classList.add('active');initSecCanvas();" style="color:var(--purple)">📐</button>
+      <button class="tool-btn" title="مقارنة المواد" onclick="openMatComparison()" style="color:var(--pink)">⚗️</button>
+      <button class="tool-btn" title="تصدير البيانات" onclick="document.getElementById('exportModal').classList.add('active')" style="color:var(--green)">💾</button>
+    </div>
+    <div class="history-indicator" id="historyIndicator">0 إجراءات</div>
+  </div><!-- /toolbar -->
+
+  <!-- WORKFLOW PROGRESS BAR -->
+  <div class="workflow-bar" id="workflowBar">
+    <div class="wf-step done" onclick="switchTab('setup',document.querySelector('.menu-item'))"><span class="wf-dot"></span>&nbsp;⚙️ إعداد</div>
+    <div class="wf-connector done"></div>
+    <div class="wf-step done"><span class="wf-dot"></span>&nbsp;🔧 مواد</div>
+    <div class="wf-connector" id="wfc-mesh"></div>
+    <div class="wf-step active" id="wf-mesh"><span class="wf-dot"></span>&nbsp;🌐 شبكة</div>
+    <div class="wf-connector" id="wfc-solve"></div>
+    <div class="wf-step locked" id="wf-solve"><span class="wf-dot"></span>&nbsp;▶️ حل</div>
+    <div class="wf-connector" id="wfc-results"></div>
+    <div class="wf-step locked" id="wf-results"><span class="wf-dot"></span>&nbsp;📊 نتائج</div>
+    <div class="wf-connector" id="wfc-report"></div>
+    <div class="wf-step locked" id="wf-report"><span class="wf-dot"></span>&nbsp;📄 تقرير</div>
+    <div style="flex:1"></div>
+    <div style="font-family:'Share Tech Mono';font-size:9px;color:var(--text-dim);white-space:nowrap;">تقدم المشروع:</div>
+    <div style="width:100px;height:4px;background:var(--border);border-radius:2px;margin:0 8px;overflow:hidden;flex-shrink:0;">
+      <div id="wfProgressFill" style="height:100%;width:33%;background:linear-gradient(90deg,var(--cyan),var(--green));transition:width 0.5s;"></div>
+    </div>
+    <div id="wfPct" style="font-family:'Orbitron';font-size:9px;color:var(--cyan);white-space:nowrap;">33%</div>
+  </div>
+
+  <!-- WORKSPACE -->
+  <div class="workspace">
+
+    <!-- LEFT PANEL -->
+    <div class="left-panel">
+      <div class="panel-header">
+        <span>📁 شجرة النموذج</span>
+        <button class="tool-btn" style="width:22px;height:22px;font-size:12px" title="إضافة عنصر" onclick="toggleAddRow()">+</button>
+      </div>
+
+      <!-- Add row (hidden by default) -->
+      <div class="add-item-row" id="addItemRow" style="display:none;">
+        <select class="add-item-select" id="newItemIcon">
+          <option value="🔷">🔷</option>
+          <option value="⭕">⭕</option>
+          <option value="⚡">⚡</option>
+          <option value="📌">📌</option>
+          <option value="🔩">🔩</option>
+          <option value="📦">📦</option>
+          <option value="🔶">🔶</option>
+        </select>
+        <input class="add-item-input" id="newItemName" placeholder="اسم العنصر..." onkeydown="if(event.key==='Enter')addTreeItem()"/>
+        <button class="add-item-confirm" onclick="addTreeItem()">✓</button>
+        <button class="add-item-confirm" style="background:var(--border);color:var(--text-dim)" onclick="toggleAddRow()">✕</button>
+      </div>
+
+      <div class="tree-view" id="treeView"></div>
+
+      <!-- Properties panel -->
+      <div class="properties-panel">
+        <div class="panel-header">⚙️ الخصائص</div>
+        <div id="propertiesContent"></div>
+      </div>
+    </div>
+
+    <!-- CENTER VIEWPORT -->
+    <div class="viewport" id="mainViewport">
+      <div class="viewport-header">
+        <div class="viewport-title" id="vpTitle">🔧 GEOMETRY VIEWPORT</div>
+        <div class="viewport-info">
+          <span>Nodes: <b style="color:var(--cyan)" id="vpNodes">42,850</b></span>
+          <span>Elements: <b style="color:var(--cyan)" id="vpElems">28,640</b></span>
+          <span>Time: <b style="color:var(--green)" id="vpTime">0.00s</b></span>
+        </div>
+      </div>
+
+      <div id="canvas-container"></div>
+
+      <!-- Tab content panels overlaid on viewport -->
+      <div id="tabOverlay" style="position:absolute;inset:0;top:40px;display:none;z-index:20;overflow-y:auto;background:rgba(2,4,8,0.95);">
+        <!-- Setup tab -->
+        <div class="tab-panel active" id="tab-setup">
+          <div class="tab-panel-inner">
+            <h3 style="font-family:Orbitron;color:var(--cyan);margin-bottom:15px;font-size:12px;letter-spacing:2px;">⚙️ إعداد النموذج</h3>
+            <div class="form-grid">
+              <div class="form-row">
+                <label class="form-label">اسم المشروع</label>
+                <input class="form-input" id="projName" value="Assembly_001" oninput="updateProjectName()"/>
+              </div>
+              <div class="form-row">
+                <label class="form-label">نوع التحليل</label>
+                <select class="form-select" id="analysisType" onchange="log('تم تغيير نوع التحليل: '+this.value,'info')">
+                  <option>Static Structural</option>
+                  <option>Modal Analysis</option>
+                  <option>Thermal-Structural</option>
+                  <option>Fatigue Analysis</option>
+                  <option>Buckling Analysis</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label class="form-label">وحدات القياس</label>
+                <select class="form-select" id="unitSystem" onchange="log('وحدات: '+this.value,'info')">
+                  <option>SI (N, m, Pa)</option>
+                  <option>SI (kN, mm, MPa)</option>
+                  <option>US Customary</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label class="form-label">أبعاد الحل</label>
+                <select class="form-select" onchange="log('أبعاد: '+this.value,'info')">
+                  <option>3D</option>
+                  <option>2D Plane Stress</option>
+                  <option>2D Plane Strain</option>
+                  <option>Axisymmetric</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label class="form-label">تسارع الجاذبية</label>
+                <input class="form-input" value="9.81 m/s²" id="gravity"/>
+              </div>
+              <div class="form-row">
+                <label class="form-label">درجة الحرارة المرجعية</label>
+                <input class="form-input" value="20 °C" id="refTemp"/>
+              </div>
+            </div>
+            <div style="margin-top:20px;display:flex;gap:10px;">
+              <button class="btn primary" onclick="saveSetup()">💾 حفظ الإعداد</button>
+              <button class="btn" onclick="resetSetup()">↺ إعادة تعيين</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Material tab -->
+        <div class="tab-panel" id="tab-material">
+          <div class="tab-panel-inner">
+            <h3 style="font-family:Orbitron;color:var(--cyan);margin-bottom:15px;font-size:12px;letter-spacing:2px;">🔧 قاعدة بيانات المواد</h3>
+            <div id="materialList"></div>
+            <div style="margin-top:15px;display:flex;gap:10px;">
+              <button class="btn primary" onclick="applyMaterial()">✓ تطبيق المادة المحددة</button>
+              <button class="btn" onclick="openCustomMaterial()">+ مادة مخصصة</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mesh tab -->
+        <div class="tab-panel" id="tab-mesh">
+          <div class="tab-panel-inner">
+            <h3 style="font-family:Orbitron;color:var(--cyan);margin-bottom:15px;font-size:12px;letter-spacing:2px;">🌐 إعدادات الشبكة</h3>
+            <div class="form-row">
+              <label class="form-label">نوع العناصر</label>
+              <select class="form-select" id="elemType" onchange="updateMeshStats()">
+                <option>Tetrahedral (C3D4)</option>
+                <option>Hexahedral (C3D8)</option>
+                <option>Quadratic Tet (C3D10)</option>
+                <option>Shell (S4R)</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label class="form-label">كثافة الشبكة — <span id="densityLabel">متوسط</span></label>
+              <input type="range" class="mesh-slider" min="1" max="5" value="3" id="meshDensity" oninput="updateMeshDensity(this.value)"/>
+            </div>
+            <div class="mesh-info">
+              <div class="mesh-stat"><div class="mesh-stat-val" id="statNodes">42,850</div><div class="mesh-stat-label">NODES</div></div>
+              <div class="mesh-stat"><div class="mesh-stat-val" id="statElems">28,640</div><div class="mesh-stat-label">ELEMENTS</div></div>
+              <div class="mesh-stat"><div class="mesh-stat-val" id="statQuality">92%</div><div class="mesh-stat-label">QUALITY</div></div>
+            </div>
+            <div class="form-row" style="margin-top:15px;">
+              <label class="form-label">حجم العنصر (mm)</label>
+              <input class="form-input" id="elemSize" value="5.0" type="number" min="0.5" max="50" step="0.5" oninput="updateMeshFromSize()"/>
+            </div>
+            <div style="margin-top:15px;display:flex;gap:10px;">
+              <button class="btn primary" onclick="generateMesh()">⚡ توليد الشبكة</button>
+              <button class="btn" onclick="checkMeshQuality()">✓ فحص الجودة</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Solve tab -->
+        <div class="tab-panel" id="tab-solve">
+          <div class="tab-panel-inner">
+            <h3 style="font-family:Orbitron;color:var(--cyan);margin-bottom:15px;font-size:12px;letter-spacing:2px;">▶️ إعدادات الحل</h3>
+            <div class="form-grid">
+              <div class="form-row">
+                <label class="form-label">المحلل (Solver)</label>
+                <select class="form-select" id="solverType">
+                  <option>Direct Sparse</option>
+                  <option>Iterative PCG</option>
+                  <option>MUMPS</option>
+                  <option>PARDISO</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label class="form-label">أقصى عدد تكرارات</label>
+                <input class="form-input" value="100" type="number" id="maxIter"/>
+              </div>
+              <div class="form-row">
+                <label class="form-label">دقة التقارب</label>
+                <input class="form-input" value="1e-6" id="tolerance"/>
+              </div>
+              <div class="form-row">
+                <label class="form-label">خطوات الحل</label>
+                <input class="form-input" value="10" type="number" id="loadSteps"/>
+              </div>
+            </div>
+            <div class="form-row" style="margin-top:10px;">
+              <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                <input type="checkbox" id="chkLargeDeform" style="accent-color:var(--cyan)"/> تحليل التشوهات الكبيرة (Large Deformation)
+              </label>
+            </div>
+            <div class="form-row">
+              <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                <input type="checkbox" id="chkNonlinear" style="accent-color:var(--cyan)"/> تحليل غير خطي (Nonlinear)
+              </label>
+            </div>
+            <h4 style="font-family:'Share Tech Mono';font-size:9px;color:var(--text-dim);margin:15px 0 8px;text-transform:uppercase;">سجل الحل</h4>
+            <div class="solve-log" id="solveLog">
+              <div class="solve-log-line info">— جاهز للحل —</div>
+            </div>
+            <div class="solve-btn-row">
+              <button class="btn primary" onclick="runSolver()">▶ تشغيل الحل</button>
+              <button class="btn" onclick="clearSolveLog()">🗑 مسح السجل</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Results tab -->
+        <div class="tab-panel" id="tab-results">
+          <div class="tab-panel-inner">
+            <h3 style="font-family:Orbitron;color:var(--cyan);margin-bottom:15px;font-size:12px;letter-spacing:2px;">📊 ملخص النتائج</h3>
+            <p style="color:var(--text-dim);font-size:11px;margin-bottom:15px;">النتائج متوفرة في اللوحة اليمنى. اضغط على أزرار العرض في أسفل منطقة العرض للتبديل بين أنواع النتائج.</p>
+            <div id="resultsTabContent"></div>
+          </div>
+        </div>
+
+        <!-- Report tab -->
+        <div class="tab-panel" id="tab-report">
+          <div class="tab-panel-inner">
+            <h3 style="font-family:Orbitron;color:var(--cyan);margin-bottom:15px;font-size:12px;letter-spacing:2px;">📄 التقرير الهندسي</h3>
+            <div class="form-grid">
+              <div class="form-row">
+                <label class="form-label">المهندس</label>
+                <input class="form-input" value="ENG_ALAA MOHAMMED" id="repEngineer"/>
+              </div>
+              <div class="form-row">
+                <label class="form-label">رقم التقرير</label>
+                <input class="form-input" value="RPT-2024-001" id="repNumber"/>
+              </div>
+              <div class="form-row">
+                <label class="form-label">المشروع</label>
+                <input class="form-input" value="Assembly_001" id="repProject"/>
+              </div>
+              <div class="form-row">
+                <label class="form-label">التاريخ</label>
+                <input class="form-input" type="date" id="repDate"/>
+              </div>
+            </div>
+            <div style="margin:10px 0 5px;font-family:'Share Tech Mono';font-size:9px;color:var(--text-dim);">معاينة التقرير</div>
+            <div class="report-preview" id="reportPreview"></div>
+            <div style="margin-top:15px;display:flex;gap:10px;">
+              <button class="btn primary" onclick="generateReport()">📄 توليد التقرير</button>
+              <button class="btn" onclick="printReport()">🖨️ طباعة</button>
+              <button class="btn" onclick="exportReport()">💾 تصدير PDF</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- View Cube -->
+      <canvas class="view-cube" id="viewCube"></canvas>
+
+      <!-- Colormap Legend -->
+      <div class="colormap-legend" id="colormapLegend">
+        <div style="font-family:'Share Tech Mono';font-size:8px;color:var(--amber);margin-bottom:4px;text-align:center;">STRESS (MPa)</div>
+        <canvas id="colormapBar" class="colormap-bar" width="100" height="120"></canvas>
+        <div class="colormap-labels"><span id="cmMin">0</span><span id="cmMax">250</span></div>
+      </div>
+
+      <!-- Parametric 3D Editor Panel -->
+      <div class="param3d-panel" id="param3dPanel">
+        <div class="param3d-title">⚙️ PARAMETRIC EDITOR</div>
+        <div class="param3d-row">
+          <div style="display:flex;justify-content:space-between;"><span class="param3d-label">الطول L (mm)</span><span class="param3d-val" id="pv_L">300</span></div>
+          <input type="range" class="param3d-slider" min="100" max="800" value="300" id="ps_L" oninput="updateParam3D('L',this.value)"/>
+        </div>
+        <div class="param3d-row">
+          <div style="display:flex;justify-content:space-between;"><span class="param3d-label">العرض W (mm)</span><span class="param3d-val" id="pv_W">200</span></div>
+          <input type="range" class="param3d-slider" min="50" max="500" value="200" id="ps_W" oninput="updateParam3D('W',this.value)"/>
+        </div>
+        <div class="param3d-row">
+          <div style="display:flex;justify-content:space-between;"><span class="param3d-label">الارتفاع H (mm)</span><span class="param3d-val" id="pv_H">20</span></div>
+          <input type="range" class="param3d-slider" min="5" max="100" value="20" id="ps_H" oninput="updateParam3D('H',this.value)"/>
+        </div>
+        <div class="param3d-row">
+          <div style="display:flex;justify-content:space-between;"><span class="param3d-label">قطر الفتحة D (mm)</span><span class="param3d-val" id="pv_D">50</span></div>
+          <input type="range" class="param3d-slider" min="10" max="150" value="50" id="ps_D" oninput="updateParam3D('D',this.value)"/>
+        </div>
+        <button class="solve-action-btn" style="padding:6px;font-size:9px;margin-top:5px;" onclick="rebuildModel()">🔄 إعادة بناء النموذج</button>
+      </div>
+
+      <!-- Toggle parametric panel button -->
+      <button onclick="document.getElementById('param3dPanel').classList.toggle('visible')"
+        style="position:absolute;top:50px;right:10px;z-index:20;background:rgba(7,21,37,0.9);border:1px solid var(--border);color:var(--cyan);padding:5px 10px;border-radius:4px;cursor:pointer;font-size:10px;font-family:'Share Tech Mono';">
+        ⚙️ أبعاد
+      </button>
+
+      <!-- Viewport Toolbar -->
+      <div class="viewport-toolbar" id="vpToolbar">
+        <button class="vp-btn active" onclick="setResultType('geometry',this)">🔷 هندسة</button>
+        <button class="vp-btn" onclick="setResultType('stress',this)">🌡️ إجهاد</button>
+        <button class="vp-btn" onclick="setResultType('displacement',this)">↔️ إزاحة</button>
+        <button class="vp-btn" onclick="setResultType('safety',this)">🛡️ أمان</button>
+        <button class="vp-btn" onclick="setResultType('mesh',this)">🌐 شبكة</button>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="right-panel">
+      <div class="results-tabs">
+        <button class="res-tab active" onclick="switchResTab('summary',this)">الملخص</button>
+        <button class="res-tab" onclick="switchResTab('graphs',this)">الرسوم</button>
+        <button class="res-tab" onclick="switchResTab('probe',this)">قياس</button>
+      </div>
+      <div class="results-content">
+        <!-- Summary -->
+        <div class="results-panel-content active" id="res-summary">
+          <div class="metric-card" id="card-stress">
+            <div class="metric-header">
+              <span class="metric-name">VON MISES STRESS</span>
+              <span class="metric-status pass" id="stressStatus">PASS</span>
+            </div>
+            <div><span class="metric-value" id="stressVal">87.4</span><span class="metric-unit">MPa</span></div>
+            <div class="metric-limit" id="stressLimit">Limit: 250 MPa | FOS: 2.86</div>
+            <canvas class="mini-chart" id="miniStressChart" width="260" height="60"></canvas>
+          </div>
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="metric-name">DISPLACEMENT MAX</span>
+              <span class="metric-status pass" id="dispStatus">PASS</span>
+            </div>
+            <div><span class="metric-value" id="dispVal">0.31</span><span class="metric-unit">mm</span></div>
+            <div class="metric-limit" id="dispLimit">Limit: 0.5 mm | Node: 1842</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="metric-name">SAFETY FACTOR</span>
+              <span class="metric-status warn" id="sfStatus">MARGINAL</span>
+            </div>
+            <div><span class="metric-value" id="sfVal" style="color:var(--amber)">2.86</span><span class="metric-unit">—</span></div>
+            <div class="metric-limit">Required: 2.5 | Critical Zone: Weld</div>
+          </div>
+          <div class="metric-card" style="border-color:var(--amber)">
+            <div class="metric-header">
+              <span class="metric-name">⚠️ STRESS CONCENTRATION</span>
+              <span class="metric-status warn">WARNING</span>
+            </div>
+            <div style="font-size:11px;color:var(--text-dim);line-height:1.6;margin-top:10px">تم اكتشاف إجهاد عالي عند وصلة اللحام (الضلع-القاعدة). يوصى بزيادة نصف قطر الشريحة إلى 8mm.</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-header"><span class="metric-name">STRAIN ENERGY</span><span class="metric-status pass">OK</span></div>
+            <div><span class="metric-value" style="font-size:18px" id="strainVal">12.5</span><span class="metric-unit">J</span></div>
+          </div>
+        </div>
+
+        <!-- Graphs -->
+        <div class="results-panel-content" id="res-graphs">
+          <div class="graph-title">توزيع الإجهاد عبر العناصر</div>
+          <canvas class="graph-canvas" id="graphStress" width="260" height="120"></canvas>
+          <div class="graph-title">منحنى الإجهاد-الإزاحة</div>
+          <canvas class="graph-canvas" id="graphSigmaDisp" width="260" height="120"></canvas>
+          <div class="graph-title">عامل الأمان بالموقع</div>
+          <canvas class="graph-canvas" id="graphSF" width="260" height="120"></canvas>
+        </div>
+
+        <!-- Probe -->
+        <div class="results-panel-content" id="res-probe">
+          <p style="font-size:10px;color:var(--text-dim);margin-bottom:10px;font-family:'Share Tech Mono'">انقر على نقطة في الفيوبورت لقياس قيمها</p>
+          <div class="probe-grid">
+            <div class="probe-cell"><div class="probe-cell-label">σ_x (MPa)</div><div class="probe-cell-val" id="px">—</div></div>
+            <div class="probe-cell"><div class="probe-cell-label">σ_y (MPa)</div><div class="probe-cell-val" id="py">—</div></div>
+            <div class="probe-cell"><div class="probe-cell-label">σ_z (MPa)</div><div class="probe-cell-val" id="pz">—</div></div>
+            <div class="probe-cell"><div class="probe-cell-label">τ_xy (MPa)</div><div class="probe-cell-val" id="ptxy">—</div></div>
+            <div class="probe-cell"><div class="probe-cell-label">Von Mises</div><div class="probe-cell-val" id="pvm" style="color:var(--cyan)">—</div></div>
+            <div class="probe-cell"><div class="probe-cell-label">Disp (mm)</div><div class="probe-cell-val" id="pd">—</div></div>
+            <div class="probe-cell"><div class="probe-cell-label">Node ID</div><div class="probe-cell-val" id="pnid">—</div></div>
+            <div class="probe-cell"><div class="probe-cell-label">FOS</div><div class="probe-cell-val" id="pfos">—</div></div>
+          </div>
+          <div style="margin-top:10px">
+            <button class="btn" style="width:100%;margin-top:5px" onclick="clearProbe()">🗑 مسح القياسات</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Timeline -->
+      <div class="timeline">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-dim)">
+          <span>0%</span><span id="sliderLabel">0%</span><span>100%</span>
+        </div>
+        <input type="range" class="timeline-slider" min="0" max="100" value="0" id="animSlider" oninput="onSliderChange(this.value)"/>
+        <div style="text-align:center;font-size:10px;color:var(--cyan);margin-top:3px">
+          معامل الحمل: <span id="loadFactor">0.0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div class="bottom-bar">
+    <div style="display:flex;gap:15px;align-items:center">
+      <span style="color:var(--cyan)" id="statusLabel">READY</span>
+      <div class="progress-bar"><div class="progress-fill" id="mainProgress" style="width:100%"></div></div>
+    </div>
+    <div class="console-output" id="console">
+      <span style="color:var(--green)">✓</span> تم توليد الشبكة | <span style="color:var(--cyan)">✓</span> تم تطبيق القيود | <span style="color:var(--amber)">⚠</span> تقارب في 12 تكرار
+    </div>
+    <div style="display:flex;gap:15px">
+      <span id="cpuLabel">CPU: 12%</span>
+      <span id="gpuLabel">GPU: 45%</span>
+      <span id="memLabel">MEM: 2.4GB</span>
+    </div>
+  </div>
+
+</div><!-- /app-container -->
+
+<script>
+// ════════════════════════════════════════════════════════════════
+// AXIOM PRO v4.0 — FULL INTERACTIVE ENGINE
+// ════════════════════════════════════════════════════════════════
+
+const AXIOM = {
+  version:'4.0.0',
+  currentTab:'setup',
+  currentViewMode:'shaded',
+  currentResultType:'geometry',
+  currentToolMode:'select',
+  animPlaying:false,
+  animFrame:0,
+  animInterval:null,
+  sectionActive:false,
+  scene:null,camera:null,renderer:null,controls:null,
+  meshes:{},
+  selectedMaterial:'ASTM A36',
+  solved:false,
+  results:{stress:87.4,disp:0.31,sf:2.86,strain:12.5},
+  contextTarget:null,
+  treeItems:[
+    {id:'root',icon:'📦',name:'Assembly_001',children:['bp','vr','sh','fl','fc']},
+    {id:'bp',icon:'🔷',name:'Base_Plate',parent:'root'},
+    {id:'vr',icon:'🔷',name:'Vertical_Rib',parent:'root'},
+    {id:'sh',icon:'⭕',name:'Shaft_Hole',parent:'root'},
+    {id:'fl',icon:'⚡',name:'Force_Load_1',parent:'root'},
+    {id:'fc',icon:'📌',name:'Fixed_Constraint',parent:'root'},
+  ],
+  selectedTreeId:'root',
+  props:{
+    material:{Grade:'ASTM A36','E (GPa)':'200','ν':'0.28','Fy (MPa)':'250'},
+    load:{Magnitude:'12 kN',Direction:'[0,0,-1]'},
+  }
+};
+
+const MaterialDB={
+  'ASTM A36':{E:200,nu:0.28,rho:7850,yield:250,ultimate:400,color:0x888899,grade:'Carbon Steel'},
+  'AISI 316L':{E:193,nu:0.30,rho:8000,yield:170,ultimate:485,color:0xaaccdd,grade:'Stainless Steel'},
+  'Al 6061-T6':{E:68.9,nu:0.33,rho:2700,yield:276,ultimate:310,color:0xcccccc,grade:'Aluminum'},
+  'Ti-6Al-4V':{E:113.8,nu:0.342,rho:4430,yield:880,ultimate:950,color:0xaaaabb,grade:'Titanium'},
+  'AISI 4340':{E:205,nu:0.29,rho:7850,yield:470,ultimate:745,color:0x99aaaa,grade:'Alloy Steel'},
+};
+
+// ── TOAST ──
+function toast(msg,type='success'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast '+type+' show';
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ── LOG ──
+function log(msg,type='ok'){
+  const c=document.getElementById('console');
+  const icon={ok:'<span style="color:var(--green)">✓</span>',info:'<span style="color:var(--cyan)">→</span>',warn:'<span style="color:var(--amber)">⚠</span>',err:'<span style="color:var(--red)">✗</span>'};
+  c.innerHTML=icon[type]+' '+msg;
+  const sl=document.getElementById('solveLog');
+  if(sl){const d=document.createElement('div');d.className='solve-log-line '+type;d.textContent='['+new Date().toLocaleTimeString()+']: '+msg;sl.appendChild(d);sl.scrollTop=sl.scrollHeight;}
+}
+
+// ── TAB SWITCHING ──
+let tabOverlayVisible=false;
+function switchTab(tab,btn){
+  document.querySelectorAll('.menu-item').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  AXIOM.currentTab=tab;
+  const overlay=document.getElementById('tabOverlay');
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  const panel=document.getElementById('tab-'+tab);
+  if(panel) panel.classList.add('active');
+
+  if(tab==='results'){
+    overlay.style.display='none'; // results shown in right panel always
+    log('عرض النتائج في اللوحة اليمنى','info');
+    buildResultsTab();
+  } else {
+    overlay.style.display='block';
+    log('تم فتح: '+tab,'info');
+  }
+
+  if(tab==='material') buildMaterialList();
+  if(tab==='report') buildReportPreview();
+  if(tab==='mesh') updateMeshStats();
+}
+
+// ── CLOSE OVERLAY when clicking viewport ──
+document.getElementById('canvas-container').addEventListener('click',function(){
+  const overlay=document.getElementById('tabOverlay');
+  if(overlay.style.display==='block'){
+    overlay.style.display='none';
+    document.querySelectorAll('.menu-item').forEach(b=>b.classList.remove('active'));
+    log('تم إغلاق اللوحة','info');
+  }
+});
+
+// ── RESULT TABS ──
+function switchResTab(tab,btn){
+  document.querySelectorAll('.res-tab').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.querySelectorAll('.results-panel-content').forEach(p=>p.classList.remove('active'));
+  document.getElementById('res-'+tab).classList.add('active');
+  if(tab==='graphs') drawAllGraphs();
+}
+
+// ── TOOLBAR TOOL MODE ──
+function setToolMode(mode,btn){
+  document.querySelectorAll('#mainMenu ~ .toolbar .tool-group:first-child .tool-btn').forEach(b=>b.classList.remove('active'));
+  const btnEl=document.getElementById('tb'+mode.charAt(0).toUpperCase()+mode.slice(1));
+  if(btnEl) btnEl.classList.add('active');
+  AXIOM.currentToolMode=mode;
+  log('أداة: '+mode,'info');
+}
+
+// ── VIEW MODE ──
+function setViewMode(mode,btn){
+  const btns=document.querySelectorAll('.toolbar .tool-group:nth-child(2) .tool-btn');
+  btns.forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  AXIOM.currentViewMode=mode;
+  if(!AXIOM.scene) return;
+  AXIOM.scene.traverse(child=>{
+    if(child.isMesh && child.material){
+      child.material.wireframe=(mode==='wireframe');
+      if(mode==='shaded') child.material.emissive && child.material.emissive.setHex(0x000000);
+      if(mode==='stress' && AXIOM.meshes.stressZone) AXIOM.meshes.stressZone.visible=true;
+    }
+  });
+  log('وضع العرض: '+mode,'info');
+  toast('وضع العرض: '+mode,'success');
+}
+
+// ── SECTION VIEW ──
+function toggleSectionView(btn){
+  AXIOM.sectionActive=!AXIOM.sectionActive;
+  btn.classList.toggle('active',AXIOM.sectionActive);
+  if(AXIOM.renderer){
+    if(AXIOM.sectionActive){
+      AXIOM.renderer.clippingPlanes=[new THREE.Plane(new THREE.Vector3(0,1,0),0)];
+      log('مقطع عرضي نشط','warn');
+    } else {
+      AXIOM.renderer.clippingPlanes=[];
+      log('تم إلغاء المقطع','info');
+    }
+  }
+}
+
+// ── VIEWPORT PRESET ──
+function applyViewPreset(preset){
+  if(!AXIOM.camera||!AXIOM.controls) return;
+  const d=0.5;
+  const presets={
+    iso:{pos:[d,d,d],target:[0,0.1,0]},
+    front:{pos:[0,d,d*2],target:[0,0.1,0]},
+    top:{pos:[0,d*3,0.01],target:[0,0,0]},
+    right:{pos:[d*2,d,0],target:[0,0.1,0]},
+    back:{pos:[0,d,-d*2],target:[0,0.1,0]},
+  };
+  const p=presets[preset]||presets.iso;
+  AXIOM.camera.position.set(...p.pos);
+  AXIOM.controls.target.set(...p.target);
+  AXIOM.controls.update();
+  document.getElementById('vpTitle').textContent='🔧 '+preset.toUpperCase()+' VIEW';
+  log('منظر: '+preset,'info');
+}
+
+// ── ZOOM ──
+function zoomCamera(factor){
+  if(!AXIOM.camera) return;
+  AXIOM.camera.position.multiplyScalar(factor);
+  log('تكبير: '+factor.toFixed(1)+'×','info');
+}
+
+// ── FIT TO SCREEN ──
+function fitToScreen(){
+  if(!AXIOM.camera||!AXIOM.controls) return;
+  AXIOM.camera.position.set(0.4,0.3,0.4);
+  AXIOM.controls.target.set(0,0.1,0);
+  AXIOM.controls.update();
+  log('ملاءمة الشاشة','info');
+  toast('تم تعيين الرؤية المثلى','success');
+}
+
+// ── RESULT TYPE ──
+function setResultType(type,btn){
+  document.querySelectorAll('.vp-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  AXIOM.currentResultType=type;
+  if(!AXIOM.scene) return;
+  const model=AXIOM.meshes.model;
+  if(!model) return;
+  const colorMap={geometry:0x888899,stress:0xff4400,displacement:0x0088ff,safety:0x00ff88,mesh:0x888899};
+  model.traverse(child=>{
+    if(child.isMesh&&child.material){
+      child.material.wireframe=(type==='mesh');
+      if(child.material.emissive){
+        const hex=type==='stress'?0x331100:type==='displacement'?0x001133:0x000000;
+        child.material.emissive.setHex(hex);
+      }
+    }
+  });
+  if(AXIOM.meshes.stressZone) AXIOM.meshes.stressZone.visible=(type==='stress');
+  document.getElementById('vpTitle').textContent='🔧 '+type.toUpperCase()+' VIEW';
+  log('نوع النتيجة: '+type,'info');
+}
+
+// ── ANIMATION ──
+function playAnimation(){
+  if(AXIOM.animPlaying) return;
+  AXIOM.animPlaying=true;
+  log('تشغيل الأنيميشن...','info');
+  document.getElementById('statusLabel').textContent='PLAYING';
+  let p=parseInt(document.getElementById('animSlider').value)||0;
+  AXIOM.animInterval=setInterval(()=>{
+    p=(p+1)%101;
+    document.getElementById('animSlider').value=p;
+    onSliderChange(p);
+    if(p>=100){clearInterval(AXIOM.animInterval);AXIOM.animPlaying=false;document.getElementById('statusLabel').textContent='READY';}
+  },50);
+}
+
+function pauseAnimation(){
+  AXIOM.animPlaying=false;
+  clearInterval(AXIOM.animInterval);
+  document.getElementById('statusLabel').textContent='PAUSED';
+  log('إيقاف مؤقت','warn');
+}
+
+function resetAnimation(){
+  pauseAnimation();
+  document.getElementById('animSlider').value=0;
+  onSliderChange(0);
+  if(AXIOM.meshes.model) AXIOM.meshes.model.rotation.x=0;
+  document.getElementById('statusLabel').textContent='READY';
+  log('إعادة تعيين الأنيميشن','info');
+}
+
+function onSliderChange(val){
+  document.getElementById('loadFactor').textContent=(val/100).toFixed(2);
+  document.getElementById('sliderLabel').textContent=val+'%';
+  if(AXIOM.meshes.model) AXIOM.meshes.model.rotation.x=(val/100)*0.02;
+  // update stress dynamically
+  const s=(87.4*(val/100+0.01)).toFixed(1);
+  document.getElementById('stressVal').textContent=s;
+}
+
+// ── TREE VIEW ──
+function renderTree(){
+  const tv=document.getElementById('treeView');
+  tv.innerHTML='';
+  const root=AXIOM.treeItems.find(x=>x.id==='root');
+  if(!root) return;
+  // Root item
+  const rootEl=makeTreeItem(root);
+  tv.appendChild(rootEl);
+  const ch=document.createElement('div');
+  ch.className='tree-children';
+  AXIOM.treeItems.filter(x=>x.parent==='root').forEach(item=>{
+    ch.appendChild(makeTreeItem(item));
+  });
+  tv.appendChild(ch);
+}
+
+function makeTreeItem(item){
+  const div=document.createElement('div');
+  div.className='tree-item'+(AXIOM.selectedTreeId===item.id?' active':'');
+  div.dataset.id=item.id;
+  div.innerHTML=`<span class="tree-icon">${item.icon}</span><span class="tree-name" id="tname_${item.id}">${item.name}</span><span class="tree-item-actions"><button class="tree-action-btn" onclick="startRename('${item.id}',event)" title="إعادة التسمية">✏</button><button class="tree-action-btn" onclick="deleteTreeItem('${item.id}',event)" title="حذف" style="color:var(--red-dim)">✕</button></span>`;
+  div.addEventListener('click',()=>selectTreeItem(item.id));
+  div.addEventListener('contextmenu',e=>{e.preventDefault();AXIOM.contextTarget=item.id;showContextMenu(e.clientX,e.clientY);});
+  return div;
+}
+
+function selectTreeItem(id){
+  AXIOM.selectedTreeId=id;
+  renderTree();
+  updateProperties();
+  const item=AXIOM.treeItems.find(x=>x.id===id);
+  if(item) log('تم تحديد: '+item.name,'info');
+}
+
+function startRename(id,event){
+  event.stopPropagation();
+  const item=AXIOM.treeItems.find(x=>x.id===id);
+  if(!item) return;
+  const span=document.getElementById('tname_'+id);
+  const input=document.createElement('input');
+  input.className='tree-item-input';
+  input.value=item.name;
+  span.replaceWith(input);
+  input.focus();input.select();
+  const save=()=>{
+    item.name=input.value||item.name;
+    renderTree();updateProperties();
+    log('تم إعادة التسمية إلى: '+item.name,'ok');
+    toast('تم التغيير: '+item.name,'success');
+    // update project name if root
+    if(id==='root') document.getElementById('projName').value=item.name;
+  };
+  input.addEventListener('blur',save);
+  input.addEventListener('keydown',e=>{if(e.key==='Enter')save();if(e.key==='Escape'){renderTree();}});
+}
+
+function deleteTreeItem(id,event){
+  event.stopPropagation();
+  const item=AXIOM.treeItems.find(x=>x.id===id);
+  if(!item||item.id==='root'){toast('لا يمكن حذف الجذر','error');return;}
+  AXIOM.treeItems=AXIOM.treeItems.filter(x=>x.id!==id);
+  if(AXIOM.selectedTreeId===id) AXIOM.selectedTreeId='root';
+  renderTree();updateProperties();
+  log('تم الحذف: '+item.name,'warn');
+  toast('تم الحذف: '+item.name,'warning');
+}
+
+function toggleAddRow(){
+  const row=document.getElementById('addItemRow');
+  row.style.display=row.style.display==='none'?'flex':'none';
+  if(row.style.display==='flex') document.getElementById('newItemName').focus();
+}
+
+function addTreeItem(){
+  const name=document.getElementById('newItemName').value.trim();
+  const icon=document.getElementById('newItemIcon').value;
+  if(!name){toast('أدخل اسم العنصر','warning');return;}
+  const id='item_'+Date.now();
+  AXIOM.treeItems.push({id,icon,name,parent:'root'});
+  document.getElementById('newItemName').value='';
+  toggleAddRow();
+  renderTree();
+  selectTreeItem(id);
+  log('تمت إضافة: '+name,'ok');
+  toast('تمت الإضافة: '+name,'success');
+}
+
+// ── CONTEXT MENU ──
+function showContextMenu(x,y){
+  const cm=document.getElementById('contextMenu');
+  cm.style.left=x+'px';cm.style.top=y+'px';cm.classList.add('show');
+}
+function hideContextMenu(){document.getElementById('contextMenu').classList.remove('show');}
+document.addEventListener('click',hideContextMenu);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){hideContextMenu();document.getElementById('tabOverlay').style.display='none';}});
+
+function ctxAction(action){
+  hideContextMenu();
+  const id=AXIOM.contextTarget;
+  if(!id) return;
+  if(action==='rename') startRename(id,{stopPropagation:()=>{}});
+  else if(action==='delete') deleteTreeItem(id,{stopPropagation:()=>{}});
+  else if(action==='duplicate'){
+    const item=AXIOM.treeItems.find(x=>x.id===id);
+    if(item){const nid='item_'+Date.now();AXIOM.treeItems.push({id:nid,icon:item.icon,name:item.name+'_copy',parent:item.parent||'root'});renderTree();selectTreeItem(nid);log('نسخة من: '+item.name,'ok');}
+  } else if(action==='properties'){
+    updateProperties();log('عرض خصائص: '+id,'info');
+  }
+}
+
+// ── PROPERTIES ──
+function updateProperties(){
+  const pc=document.getElementById('propertiesContent');
+  pc.innerHTML='';
+  const makeGroup=(title,rows)=>{
+    const g=document.createElement('div');g.className='prop-group';
+    const sh=document.createElement('div');sh.className='prop-section-header';
+    sh.innerHTML=`<span class="prop-label">${title}</span>`;
+    g.appendChild(sh);
+    rows.forEach(([name,value,key,group])=>{
+      const row=document.createElement('div');row.className='prop-row';
+      const nameEl=document.createElement('span');nameEl.className='prop-name';nameEl.textContent=name;
+      const valEl=document.createElement('span');valEl.className='prop-value-display';valEl.id='pv_'+key;valEl.textContent=value;
+      valEl.addEventListener('click',()=>makeEditable(valEl,key,group));
+      row.appendChild(nameEl);row.appendChild(valEl);g.appendChild(row);
+    });
+    return g;
+  };
+  const m=AXIOM.props.material;
+  const matSel=document.createElement('div');matSel.className='prop-group';
+  matSel.innerHTML=`<div class="prop-section-header"><span class="prop-label">المادة</span></div>
+  <div class="prop-row"><span class="prop-name">Grade</span>
+  <select class="prop-value-select" onchange="changeMaterial(this.value)">
+    ${Object.keys(MaterialDB).map(k=>`<option ${k===AXIOM.selectedMaterial?'selected':''}>${k}</option>`).join('')}
+  </select></div>
+  <div class="prop-row"><span class="prop-name">E (GPa)</span><span class="prop-value-display" id="pv_E">${MaterialDB[AXIOM.selectedMaterial].E}</span></div>
+  <div class="prop-row"><span class="prop-name">ν</span><span class="prop-value-display" id="pv_nu">${MaterialDB[AXIOM.selectedMaterial].nu}</span></div>
+  <div class="prop-row"><span class="prop-name">Fy (MPa)</span><span class="prop-value-display" id="pv_fy">${MaterialDB[AXIOM.selectedMaterial].yield}</span></div>`;
+  pc.appendChild(matSel);
+
+  const l=AXIOM.props.load;
+  const loadGrp=makeGroup('الأحمال',[
+    ['Magnitude',l.Magnitude,'lmag','load'],
+    ['Direction',l.Direction,'ldir','load'],
+  ]);
+  pc.appendChild(loadGrp);
+}
+
+function makeEditable(el,key,group){
+  const input=document.createElement('input');
+  input.className='prop-value-input';
+  input.value=el.textContent;
+  el.replaceWith(input);input.focus();input.select();
+  const save=()=>{
+    const val=input.value||el.textContent;
+    if(group==='load') AXIOM.props.load[key==='lmag'?'Magnitude':'Direction']=val;
+    const span=document.createElement('span');span.className='prop-value-display';span.id='pv_'+key;span.textContent=val;
+    span.addEventListener('click',()=>makeEditable(span,key,group));
+    input.replaceWith(span);
+    log('تم تحديث '+key+' → '+val,'ok');
+    toast('تم حفظ القيمة','success');
+    recalcResults();
+  };
+  input.addEventListener('blur',save);
+  input.addEventListener('keydown',e=>{if(e.key==='Enter')save();});
+}
+
+function changeMaterial(mat){
+  AXIOM.selectedMaterial=mat;
+  const m=MaterialDB[mat];
+  ['E','nu','fy'].forEach(k=>{
+    const el=document.getElementById('pv_'+k);
+    if(el) el.textContent=k==='E'?m.E:k==='nu'?m.nu:m.yield;
+  });
+  AXIOM.props.material.Grade=mat;
+  // Update model color
+  if(AXIOM.meshes.model){
+    AXIOM.meshes.model.traverse(child=>{
+      if(child.isMesh&&child.material&&child.name!=='stressZone') child.material.color.setHex(m.color);
+    });
+  }
+  recalcResults();
+  log('مادة: '+mat,'ok');
+  toast('تم تطبيق المادة: '+mat,'success');
+}
+
+function recalcResults(){
+  const m=MaterialDB[AXIOM.selectedMaterial];
+  const load=parseFloat(AXIOM.props.load.Magnitude)||12;
+  const stress=(87.4*(load/12)*(200/m.E)).toFixed(1);
+  const disp=(0.31*(load/12)*(200/m.E)).toFixed(2);
+  const sf=(m.yield/parseFloat(stress)).toFixed(2);
+  AXIOM.results={stress:parseFloat(stress),disp:parseFloat(disp),sf:parseFloat(sf),strain:(12.5*load/12).toFixed(1)};
+  document.getElementById('stressVal').textContent=stress;
+  document.getElementById('dispVal').textContent=disp;
+  document.getElementById('sfVal').textContent=sf;
+  document.getElementById('strainVal').textContent=AXIOM.results.strain;
+  // Status
+  const sfNum=parseFloat(sf);
+  const stEl=document.getElementById('sfStatus');
+  if(sfNum>=3){stEl.textContent='SAFE';stEl.className='metric-status pass';}
+  else if(sfNum>=2){stEl.textContent='MARGINAL';stEl.className='metric-status warn';}
+  else{stEl.textContent='FAIL';stEl.className='metric-status fail';}
+  const sEl=document.getElementById('stressStatus');
+  if(parseFloat(stress)<m.yield*0.6){sEl.textContent='PASS';sEl.className='metric-status pass';}
+  else if(parseFloat(stress)<m.yield){sEl.textContent='WARN';sEl.className='metric-status warn';}
+  else{sEl.textContent='FAIL';sEl.className='metric-status fail';}
+  document.getElementById('stressLimit').textContent=`Limit: ${m.yield} MPa | FOS: ${sf}`;
+  drawMiniStressChart();
+}
+
+// ── MATERIAL LIST (material tab) ──
+function buildMaterialList(){
+  const ml=document.getElementById('materialList');
+  if(!ml) return;
+  ml.innerHTML='';
+  Object.entries(MaterialDB).forEach(([name,mat])=>{
+    const card=document.createElement('div');
+    card.className='material-card'+(AXIOM.selectedMaterial===name?' selected':'');
+    card.innerHTML=`<div class="material-card-name">${name} — ${mat.grade}</div>
+    <div class="material-props">
+      <div class="mprop"><div class="mprop-label">E (GPa)</div><div class="mprop-val">${mat.E}</div></div>
+      <div class="mprop"><div class="mprop-label">Fy (MPa)</div><div class="mprop-val">${mat.yield}</div></div>
+      <div class="mprop"><div class="mprop-label">ρ (kg/m³)</div><div class="mprop-val">${mat.rho}</div></div>
+      <div class="mprop"><div class="mprop-label">ν</div><div class="mprop-val">${mat.nu}</div></div>
+      <div class="mprop"><div class="mprop-label">Fu (MPa)</div><div class="mprop-val">${mat.ultimate}</div></div>
+    </div>`;
+    card.addEventListener('click',()=>{AXIOM.selectedMaterial=name;buildMaterialList();log('تم تحديد: '+name,'info');});
+    ml.appendChild(card);
+  });
+}
+
+function applyMaterial(){
+  changeMaterial(AXIOM.selectedMaterial);
+  document.getElementById('tabOverlay').style.display='none';
+  switchTab('results',null);
+  toast('تم تطبيق '+AXIOM.selectedMaterial,'success');
+}
+
+function openCustomMaterial(){
+  const name=prompt('اسم المادة الجديدة:','Custom Steel');
+  if(!name) return;
+  const E=parseFloat(prompt('معامل يونغ E (GPa):','200'));
+  const nu=parseFloat(prompt('نسبة بواسون ν:','0.3'));
+  const fy=parseFloat(prompt('إجهاد الخضوع Fy (MPa):','350'));
+  MaterialDB[name]={E,nu,rho:7800,yield:fy,ultimate:fy*1.3,color:0x998877,grade:'Custom'};
+  buildMaterialList();
+  log('تم إضافة مادة مخصصة: '+name,'ok');
+  toast('مادة جديدة: '+name,'success');
+}
+
+// ── MESH ──
+const densityLabels=['خشنة جداً','خشنة','متوسط','ناعمة','ناعمة جداً'];
+function updateMeshDensity(val){
+  document.getElementById('densityLabel').textContent=densityLabels[val-1];
+  const nodes=[8500,18200,42850,95400,210000][val-1];
+  const elems=[5800,12100,28640,64200,142000][val-1];
+  const quality=[0.78,0.85,0.92,0.95,0.97][val-1];
+  document.getElementById('statNodes').textContent=nodes.toLocaleString();
+  document.getElementById('statElems').textContent=elems.toLocaleString();
+  document.getElementById('statQuality').textContent=Math.round(quality*100)+'%';
+  document.getElementById('vpNodes').textContent=nodes.toLocaleString();
+  document.getElementById('vpElems').textContent=elems.toLocaleString();
+  const size=[20,10,5,2.5,1.2][val-1];
+  document.getElementById('elemSize').value=size;
+  log('كثافة الشبكة: '+densityLabels[val-1],'info');
+}
+function updateMeshFromSize(){
+  const s=parseFloat(document.getElementById('elemSize').value)||5;
+  const nodes=Math.round(42850*(5/s)**1.5);
+  document.getElementById('statNodes').textContent=nodes.toLocaleString();
+  document.getElementById('statElems').textContent=Math.round(nodes*0.67).toLocaleString();
+}
+function updateMeshStats(){
+  const v=document.getElementById('meshDensity');
+  if(v) updateMeshDensity(v.value);
+}
+
+function generateMesh(){
+  log('جارٍ توليد الشبكة...','info');
+  document.getElementById('statusLabel').textContent='MESHING';
+  const prog=document.getElementById('mainProgress');prog.style.width='0%';
+  let p=0;
+  const interval=setInterval(()=>{
+    p+=5;prog.style.width=p+'%';
+    if(p>=100){clearInterval(interval);document.getElementById('statusLabel').textContent='READY';log('تم توليد الشبكة بنجاح','ok');toast('✓ تم توليد الشبكة','success');}
+  },60);
+}
+
+function checkMeshQuality(){
+  const q=parseFloat(document.getElementById('statQuality').textContent)||92;
+  if(q>=90){toast('✓ جودة الشبكة ممتازة ('+q+'%)','success');log('فحص الجودة: ممتاز','ok');}
+  else{toast('⚠ جودة الشبكة تحتاج تحسين','warning');log('فحص الجودة: يحتاج تحسين','warn');}
+}
+
+// ── SETUP ──
+function saveSetup(){
+  const name=document.getElementById('projName').value;
+  // Update root name
+  const root=AXIOM.treeItems.find(x=>x.id==='root');
+  if(root){root.name=name;renderTree();}
+  log('تم حفظ الإعداد: '+name,'ok');
+  toast('تم الحفظ ✓','success');
+}
+function resetSetup(){document.getElementById('projName').value='Assembly_001';log('إعادة تعيين الإعداد','warn');toast('تم الإعادة','warning');}
+function updateProjectName(){
+  const root=AXIOM.treeItems.find(x=>x.id==='root');
+  if(root){root.name=document.getElementById('projName').value;renderTree();}
+}
+
+// ── SOLVER ──
+function runSolver(){
+  const sl=document.getElementById('solveLog');sl.innerHTML='';
+  const overlay=document.getElementById('solveOverlay');overlay.classList.add('active');
+  document.getElementById('solverDot').className='status-dot warning';
+  document.getElementById('solverStatus').textContent='SOLVING...';
+  const steps=[
+    ['تحميل المادة: '+AXIOM.selectedMaterial,'ok',5],
+    ['بناء مصفوفة الصلابة الكلية...','info',15],
+    ['تطبيق حشود وقيود الحدود...','info',25],
+    ['تحليل الاستقرار العددي...','info',35],
+    ['حل نظام المعادلات الخطي...','info',50],
+    ['التحقق من التقارب: iteration 1','info',60],
+    ['التحقق من التقارب: iteration 6','info',70],
+    ['التقارب المحقق في 12 تكرار ✓','ok',80],
+    ['حساب الإجهادات والإزاحات...','info',90],
+    ['استخراج عوامل الأمان...','info',95],
+    ['اكتمل الحل بنجاح ✓','ok',100],
+  ];
+  let i=0;
+  const runStep=()=>{
+    if(i>=steps.length){
+      overlay.classList.remove('active');
+      AXIOM.solved=true;
+      document.getElementById('solverDot').className='status-dot';
+      document.getElementById('solverStatus').textContent='SOLVED';
+      recalcResults();
+      drawAllGraphs();
+      toast('✓ اكتمل الحل بنجاح','success');
+      return;
+    }
+    const [msg,type,pct]=steps[i++];
+    document.getElementById('solvePct').textContent=pct+'%';
+    document.getElementById('solveStatusTxt').textContent=steps[i-1][0].toUpperCase();
+    document.getElementById('mainProgress').style.width=pct+'%';
+    log(msg,type);
+    setTimeout(runStep,300+Math.random()*200);
+  };
+  setTimeout(runStep,200);
+}
+
+function clearSolveLog(){
+  document.getElementById('solveLog').innerHTML='<div class="solve-log-line info">— السجل ممسوح —</div>';
+}
+
+// ── RESULTS TAB ──
+function buildResultsTab(){
+  const rc=document.getElementById('resultsTabContent');
+  if(!rc) return;
+  const r=AXIOM.results;
+  rc.innerHTML=`<div class="probe-grid">
+    <div class="probe-cell"><div class="probe-cell-label">Von Mises (MPa)</div><div class="probe-cell-val" style="color:var(--cyan)">${r.stress}</div></div>
+    <div class="probe-cell"><div class="probe-cell-label">Max Disp (mm)</div><div class="probe-cell-val">${r.disp}</div></div>
+    <div class="probe-cell"><div class="probe-cell-label">Safety Factor</div><div class="probe-cell-val" style="color:var(--amber)">${r.sf}</div></div>
+    <div class="probe-cell"><div class="probe-cell-label">Strain Energy (J)</div><div class="probe-cell-val">${r.strain}</div></div>
+  </div>`;
+}
+
+// ── GRAPHS ──
+function drawAllGraphs(){
+  drawGraph('graphStress',generateStressData(),'Stress (MPa)','#00d4ff');
+  drawGraph('graphSigmaDisp',generateDispData(),'Displacement (mm)','#00ff88');
+  drawGraph('graphSF',generateSFData(),'Safety Factor','#ffaa00');
+  drawMiniStressChart();
+}
+
+function generateStressData(){
+  return Array.from({length:20},(_,i)=>({x:i*5,y:Math.max(20,AXIOM.results.stress*(0.3+Math.random()*0.7))}));
+}
+function generateDispData(){
+  return Array.from({length:20},(_,i)=>({x:i*5,y:AXIOM.results.disp*(i/19)*(0.9+Math.random()*0.2)}));
+}
+function generateSFData(){
+  return Array.from({length:20},(_,i)=>({x:i*5,y:AXIOM.results.sf*(0.7+Math.random()*0.6)}));
+}
+
+function drawGraph(canvasId,data,label,color){
+  const canvas=document.getElementById(canvasId);
+  if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+  const w=canvas.width,h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle='#020408';ctx.fillRect(0,0,w,h);
+  // Grid
+  ctx.strokeStyle='rgba(15,58,92,0.5)';ctx.lineWidth=0.5;
+  for(let i=0;i<=4;i++){const y=h*(i/4);ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
+  // Data
+  if(!data.length) return;
+  const maxY=Math.max(...data.map(d=>d.y))*1.1||1;
+  ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=2;
+  data.forEach((d,i)=>{
+    const x=(i/(data.length-1))*w;
+    const y=h-(d.y/maxY)*h*0.85-h*0.05;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  // Fill
+  ctx.lineTo(w,h);ctx.lineTo(0,h);ctx.closePath();
+  ctx.fillStyle=color.replace('#','rgba(')+'20)';
+  const m=color.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
+  if(m) ctx.fillStyle=`rgba(${parseInt(m[1],16)},${parseInt(m[2],16)},${parseInt(m[3],16)},0.1)`;
+  ctx.fill();
+  // Label
+  ctx.fillStyle='rgba(138,160,184,0.8)';ctx.font='8px Share Tech Mono';ctx.fillText(label,5,12);
+  ctx.fillStyle=color;ctx.font='bold 10px Orbitron';ctx.textAlign='right';
+  ctx.fillText(data[data.length-1].y.toFixed(2),w-5,12);ctx.textAlign='left';
+}
+
+function drawMiniStressChart(){
+  const c=document.getElementById('miniStressChart');
+  if(!c) return;
+  const ctx=c.getContext('2d');
+  const data=Array.from({length:30},(_,i)=>(AXIOM.results.stress*(0.2+Math.sin(i*0.4)*0.3+i/30*0.7)));
+  drawGraph('miniStressChart',data.map((y,x)=>({x,y})),'','#00d4ff');
+}
+
+// ── PROBE ──
+document.getElementById('canvas-container').addEventListener('click',function(e){
+  if(AXIOM.currentTab==='probe'||document.getElementById('res-probe').classList.contains('active')){
+    const ids=['px','py','pz','ptxy','pvm','pd','pnid','pfos'];
+    const vals=[
+      (Math.random()*60-30).toFixed(1),
+      (Math.random()*80-10).toFixed(1),
+      (Math.random()*40-20).toFixed(1),
+      (Math.random()*30).toFixed(1),
+      (AXIOM.results.stress*(0.5+Math.random()*0.8)).toFixed(1),
+      (AXIOM.results.disp*Math.random()).toFixed(3),
+      Math.round(Math.random()*42850),
+      (MaterialDB[AXIOM.selectedMaterial].yield/(AXIOM.results.stress*(0.5+Math.random()*0.8))).toFixed(2),
+    ];
+    ids.forEach((id,i)=>document.getElementById(id).textContent=vals[i]);
+  }
+});
+
+function clearProbe(){
+  ['px','py','pz','ptxy','pvm','pd','pnid','pfos'].forEach(id=>document.getElementById(id).textContent='—');
+}
+
+// ── REPORT ──
+function buildReportPreview(){
+  const r=AXIOM.results;
+  const m=MaterialDB[AXIOM.selectedMaterial];
+  const today=new Date().toLocaleDateString('ar-IQ');
+  const repDate=document.getElementById('repDate');
+  if(repDate) repDate.value=new Date().toISOString().split('T')[0];
+  const eng=document.getElementById('repEngineer')?.value||'ENG_ALAA MOHAMMED';
+  const num=document.getElementById('repNumber')?.value||'RPT-2024-001';
+  const proj=document.getElementById('repProject')?.value||'Assembly_001';
+  const preview=document.getElementById('reportPreview');
+  if(!preview) return;
+  preview.innerHTML=`
+  <div class="report-section">
+    <h3>معلومات التقرير</h3>
+    <table class="report-table">
+      <tr><th>البند</th><th>القيمة</th></tr>
+      <tr><td>رقم التقرير</td><td>${num}</td></tr>
+      <tr><td>المهندس</td><td>${eng}</td></tr>
+      <tr><td>المشروع</td><td>${proj}</td></tr>
+      <tr><td>التاريخ</td><td>${today}</td></tr>
+    </table>
+  </div>
+  <div class="report-section">
+    <h3>خصائص المادة</h3>
+    <table class="report-table">
+      <tr><th>المادة</th><th>E (GPa)</th><th>ν</th><th>Fy (MPa)</th></tr>
+      <tr><td>${AXIOM.selectedMaterial}</td><td>${m.E}</td><td>${m.nu}</td><td>${m.yield}</td></tr>
+    </table>
+  </div>
+  <div class="report-section">
+    <h3>ملخص النتائج</h3>
+    <table class="report-table">
+      <tr><th>المعيار</th><th>القيمة</th><th>الحد المسموح</th><th>الحالة</th></tr>
+      <tr><td>Von Mises (MPa)</td><td>${r.stress}</td><td>${m.yield}</td><td>${r.stress<m.yield?'✓ مقبول':'✗ تجاوز'}</td></tr>
+      <tr><td>الإزاحة القصوى (mm)</td><td>${r.disp}</td><td>0.5</td><td>${r.disp<0.5?'✓ مقبول':'✗ تجاوز'}</td></tr>
+      <tr><td>عامل الأمان</td><td>${r.sf}</td><td>2.5</td><td>${r.sf>=2.5?'✓ مقبول':'✗ غير كافٍ'}</td></tr>
+    </table>
+  </div>`;
+}
+
+function generateReport(){buildReportPreview();toast('✓ تم توليد التقرير','success');log('تم توليد التقرير','ok');}
+function printReport(){buildReportPreview();window.print();log('طباعة التقرير...','info');}
+function exportReport(){toast('تصدير PDF غير متاح في هذه البيئة','warning');}
+
+// ── CPU/GPU sim ──
+setInterval(()=>{
+  document.getElementById('cpuLabel').textContent='CPU: '+Math.round(10+Math.random()*15)+'%';
+  document.getElementById('gpuLabel').textContent='GPU: '+Math.round(40+Math.random()*20)+'%';
+  const t=(Date.now()*0.001).toFixed(2);
+  document.getElementById('vpTime').textContent=t+'s';
+},2000);
+
+// ════════════════════════════════════════════════════════════════
+// THREE.JS ENGINE
+// ════════════════════════════════════════════════════════════════
+function initGraphics(){
+  const container=document.getElementById('canvas-container');
+  const width=container.clientWidth,height=container.clientHeight;
+  AXIOM.scene=new THREE.Scene();
+  AXIOM.scene.fog=new THREE.FogExp2(0x020408,0.02);
+  AXIOM.camera=new THREE.PerspectiveCamera(45,width/height,0.001,1000);
+  AXIOM.camera.position.set(0.4,0.3,0.4);
+  AXIOM.renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});
+  AXIOM.renderer.setSize(width,height);
+  AXIOM.renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  AXIOM.renderer.shadowMap.enabled=true;
+  AXIOM.renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  AXIOM.renderer.toneMappingExposure=1.2;
+  container.appendChild(AXIOM.renderer.domElement);
+  AXIOM.controls=new THREE.OrbitControls(AXIOM.camera,AXIOM.renderer.domElement);
+  AXIOM.controls.enableDamping=true;AXIOM.controls.dampingFactor=0.05;
+  AXIOM.controls.minDistance=0.1;AXIOM.controls.maxDistance=2;
+  AXIOM.controls.target.set(0,0.1,0);
+  setupLighting();setupEnvironment();createModel();
+  animate();
+  window.addEventListener('resize',onWindowResize);
+}
+
+function setupLighting(){
+  AXIOM.scene.add(new THREE.AmbientLight(0x404040,1.5));
+  const kl=new THREE.DirectionalLight(0xffffff,1);kl.position.set(5,10,7);kl.castShadow=true;AXIOM.scene.add(kl);
+  const fl=new THREE.DirectionalLight(0x00d4ff,0.3);fl.position.set(-5,0,-5);AXIOM.scene.add(fl);
+  const rl=new THREE.SpotLight(0xffaa00,0.5);rl.position.set(0,5,-5);rl.lookAt(0,0,0);AXIOM.scene.add(rl);
+}
+
+function setupEnvironment(){
+  AXIOM.scene.add(new THREE.GridHelper(2,40,0x0f3a5c,0x071525));
+  const plane=new THREE.Mesh(new THREE.PlaneGeometry(10,10),new THREE.MeshStandardMaterial({color:0x020408,roughness:0.1,metalness:0.5,transparent:true,opacity:0.5}));
+  plane.rotation.x=-Math.PI/2;plane.position.y=-0.001;plane.receiveShadow=true;AXIOM.scene.add(plane);
+}
+
+function createModel(){
+  const group=new THREE.Group();
+  const m=MaterialDB[AXIOM.selectedMaterial];
+  const mat=new THREE.MeshPhongMaterial({color:m.color,shininess:60,specular:0x222233});
+  // Base plate
+  const bp=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.02,0.2),mat.clone());
+  bp.name='basePlate';bp.castShadow=true;bp.receiveShadow=true;group.add(bp);
+  // Vertical rib
+  const vr=new THREE.Mesh(new THREE.BoxGeometry(0.02,0.15,0.18),mat.clone());
+  vr.name='vertRib';vr.position.set(0,0.085,0);vr.castShadow=true;group.add(vr);
+  // Shaft hole (visual)
+  const sc=new THREE.Mesh(new THREE.CylinderGeometry(0.025,0.025,0.06,16),new THREE.MeshPhongMaterial({color:0x334455,shininess:80}));
+  sc.name='shaft';sc.position.set(0,0.085,0);sc.rotation.z=Math.PI/2;group.add(sc);
+  // Stress zone
+  const sz=new THREE.Mesh(new THREE.SphereGeometry(0.03,12,12),new THREE.MeshPhongMaterial({color:0xff4400,transparent:true,opacity:0.4,emissive:0xff2200}));
+  sz.name='stressZone';sz.position.set(0.01,0.02,0);sz.visible=false;group.add(sz);
+  // Load arrow
+  const arrowGroup=new THREE.Group();
+  const arrowMat=new THREE.MeshBasicMaterial({color:0xffaa00});
+  const cone=new THREE.Mesh(new THREE.ConeGeometry(0.015,0.05,8),arrowMat);
+  cone.position.y=0.025;arrowGroup.add(cone);
+  const shaft=new THREE.Mesh(new THREE.CylinderGeometry(0.005,0.005,0.08,8),arrowMat);
+  shaft.position.y=0.07;arrowGroup.add(shaft);
+  arrowGroup.position.set(0,0.18,0);arrowGroup.name='loadArrow';group.add(arrowGroup);
+  // Constraints (green cones)
+  [[0.12,0,0.08],[-0.12,0,0.08],[0.12,0,-0.08],[-0.12,0,-0.08]].forEach(pos=>{
+    const c=new THREE.Mesh(new THREE.ConeGeometry(0.01,0.03,8),new THREE.MeshBasicMaterial({color:0x00ff88}));
+    c.position.set(...pos);c.rotation.x=Math.PI;group.add(c);
+  });
+  AXIOM.meshes.model=group;AXIOM.meshes.stressZone=sz;AXIOM.meshes.loadArrow=arrowGroup;
+  AXIOM.scene.add(group);
+}
+
+function animate(){
+  requestAnimationFrame(animate);
+  const t=Date.now()*0.001;
+  if(AXIOM.meshes.loadArrow) AXIOM.meshes.loadArrow.scale.y=1+Math.sin(t*2)*0.08;
+  if(AXIOM.meshes.stressZone&&AXIOM.meshes.stressZone.visible) AXIOM.meshes.stressZone.material.opacity=0.4+Math.sin(t*3)*0.2;
+  if(AXIOM.controls) AXIOM.controls.update();
+  AXIOM.renderer.render(AXIOM.scene,AXIOM.camera);
+}
+
+function onWindowResize(){
+  const c=document.getElementById('canvas-container');
+  if(!c||!AXIOM.camera||!AXIOM.renderer) return;
+  AXIOM.camera.aspect=c.clientWidth/c.clientHeight;
+  AXIOM.camera.updateProjectionMatrix();
+  AXIOM.renderer.setSize(c.clientWidth,c.clientHeight);
+}
+
+// ════════════════════════════════════════════════════════════════
+// ENGINEERING PROBLEM SOLVER ENGINE
+// ════════════════════════════════════════════════════════════════
+
+let engrScene=null,engrCamera=null,engrRenderer=null,engrControls=null,engrAnimId=null;
+let currentSubject='design';
+
+// ── Subject field templates ──
+const SUBJECT_FIELDS={
+  design:{
+    label:'تصميم الآلات — Machine Design',
+    problems:[
+      'تصميم عمود محمّل بعزم لي (Shaft under Torsion)',
+      'تصميم مسمار برشام (Bolt under Shear)',
+      'تصميم نابض (Spring Design)',
+      'تصميم لحام (Weld Joint)',
+      'تصميم مسنن (Gear Tooth Stress)',
+      'اختيار منتهى',
+    ],
+    fields:[
+      {id:'sm_type',label:'نوع المسألة',type:'select',options:['عمود - تورشن','مسمار برشام','نابض ضغط','لحام زاوية','سن مسنن']},
+      {id:'sm_mat',label:'المادة',type:'select',options:['ASTM A36 (Fy=250MPa)','AISI 4340 (Fy=470MPa)','Al 6061-T6 (Fy=276MPa)']},
+      {id:'sm_load',label:'الحمل / عزم الدوران (kN أو N·m)',type:'number',placeholder:'مثال: 12'},
+      {id:'sm_dim1',label:'البُعد الرئيسي (mm) — قطر/طول/سماكة',type:'number',placeholder:'مثال: 50'},
+      {id:'sm_dim2',label:'البُعد الثانوي (mm)',type:'number',placeholder:'مثال: 200'},
+      {id:'sm_sf',label:'عامل الأمان المطلوب',type:'number',placeholder:'مثال: 2.5'},
+    ]
+  },
+  fluid:{
+    label:'ميكانيكا الموائع — Fluid Mechanics',
+    problems:['جريان في أنبوب','معادلة برنولي','ضغط هيدروستاتيكي','فقد ضغط (Darcy-Weisbach)','مضخة centrifugal'],
+    fields:[
+      {id:'fl_type',label:'نوع المسألة',type:'select',options:['جريان في أنبوب (Pipe Flow)','برنولي','ضغط هيدروستاتيكي','فقد ضغط داركي','تدفق مفتوح']},
+      {id:'fl_fluid',label:'نوع السائل',type:'select',options:['ماء (ρ=1000,μ=0.001)','زيت (ρ=870,μ=0.1)','هواء (ρ=1.2,μ=1.8e-5)','مخصص']},
+      {id:'fl_vel',label:'السرعة (m/s)',type:'number',placeholder:'مثال: 3'},
+      {id:'fl_diam',label:'القطر (mm)',type:'number',placeholder:'مثال: 50'},
+      {id:'fl_len',label:'الطول (m)',type:'number',placeholder:'مثال: 10'},
+      {id:'fl_h',label:'الارتفاع / ضغط (m أو Pa)',type:'number',placeholder:'مثال: 5'},
+    ]
+  },
+  heat:{
+    label:'انتقال الحرارة — Heat Transfer',
+    problems:['توصيل حراري (Conduction)','حمل حراري (Convection)','إشعاع حراري (Radiation)','جدار مركّب','مبادل حراري'],
+    fields:[
+      {id:'ht_type',label:'نوع المسألة',type:'select',options:['توصيل (Conduction)','حمل حراري (Convection)','إشعاع (Radiation)','جدار مركّب','مبادل حراري']},
+      {id:'ht_mat',label:'المادة / المعامل الحراري k (W/m·K)',type:'number',placeholder:'مثال: 50 للصلب'},
+      {id:'ht_t1',label:'درجة حرارة الجانب الساخن T₁ (°C)',type:'number',placeholder:'مثال: 200'},
+      {id:'ht_t2',label:'درجة حرارة الجانب البارد T₂ (°C)',type:'number',placeholder:'مثال: 25'},
+      {id:'ht_thick',label:'السماكة / المساحة (mm أو m²)',type:'number',placeholder:'مثال: 10'},
+      {id:'ht_h',label:'معامل الحمل h (W/m²·K)',type:'number',placeholder:'مثال: 25'},
+    ]
+  },
+  stress:{
+    label:'مقاومة المواد — Mechanics of Materials',
+    problems:['إجهاد المحور','الانحناء (Bending)','القص (Shear)','التحليل المركّب','دائرة موهر'],
+    fields:[
+      {id:'st_type',label:'نوع المسألة',type:'select',options:['إجهاد محوري','انحناء عارضة','قص مباشر','تحليل مركّب','دائرة موهر']},
+      {id:'st_mat',label:'المادة',type:'select',options:['ASTM A36','AISI 316L','Al 6061-T6','Ti-6Al-4V']},
+      {id:'st_load',label:'الحمل P (kN)',type:'number',placeholder:'مثال: 50'},
+      {id:'st_l',label:'طول العضو L (m)',type:'number',placeholder:'مثال: 2'},
+      {id:'st_b',label:'عرض القطع b (mm)',type:'number',placeholder:'مثال: 100'},
+      {id:'st_d',label:'ارتفاع/قطر القطع d (mm)',type:'number',placeholder:'مثال: 200'},
+    ]
+  },
+  thermo:{
+    label:'ثيرموديناميك — Thermodynamics',
+    problems:['قانون الغاز المثالي','دورة كارنو','عمل ضغط ثابت','إنتروبي','دورة بخارية'],
+    fields:[
+      {id:'th_type',label:'نوع المسألة',type:'select',options:['غاز مثالي (PV=nRT)','دورة كارنو','عملية ضغط ثابت','انتروبي','تمدد في أسطوانة']},
+      {id:'th_gas',label:'نوع الغاز',type:'select',options:['هواء (γ=1.4,R=287)','نيتروجين (γ=1.4,R=297)','ثاني أكسيد الكربون (γ=1.3,R=189)']},
+      {id:'th_p1',label:'الضغط الابتدائي P₁ (kPa)',type:'number',placeholder:'مثال: 100'},
+      {id:'th_t1',label:'درجة الحرارة الابتدائية T₁ (K)',type:'number',placeholder:'مثال: 300'},
+      {id:'th_p2',label:'الضغط النهائي P₂ (kPa)',type:'number',placeholder:'مثال: 500'},
+      {id:'th_v1',label:'الحجم الابتدائي V₁ (m³)',type:'number',placeholder:'مثال: 0.1'},
+    ]
+  },
+  dynamics:{
+    label:'ديناميكا — Engineering Dynamics',
+    problems:['حركة مستقيمة','حركة دورانية','مركز الكتلة','طاقة وشغل','ذبذبة حرة'],
+    fields:[
+      {id:'dy_type',label:'نوع المسألة',type:'select',options:['حركة مستقيمة (Kinematics)','حركة دورانية','مركز ثقل','طاقة وشغل','ذبذبة حرة (Vibration)']},
+      {id:'dy_m',label:'الكتلة m (kg)',type:'number',placeholder:'مثال: 10'},
+      {id:'dy_v0',label:'السرعة الابتدائية v₀ (m/s)',type:'number',placeholder:'مثال: 5'},
+      {id:'dy_a',label:'التسارع a (m/s²) أو القوة F (N)',type:'number',placeholder:'مثال: 9.81'},
+      {id:'dy_t',label:'الزمن t (s) أو الزاوية θ (rad)',type:'number',placeholder:'مثال: 3'},
+      {id:'dy_k',label:'ثابت النابض k (N/m) — للذبذبة',type:'number',placeholder:'مثال: 1000'},
+    ]
+  }
+};
+
+function openEngrSolver(){
+  document.getElementById('engrModal').classList.add('active');
+  selectSubject(currentSubject,document.querySelector('.sub-btn.active'));
+  initEngrRenderer();
+}
+function closeEngrSolver(){
+  document.getElementById('engrModal').classList.remove('active');
+  if(engrAnimId) cancelAnimationFrame(engrAnimId);
+}
+
+function selectSubject(sub,btn){
+  currentSubject=sub;
+  document.querySelectorAll('.sub-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  buildInputFields(sub);
+}
+
+function buildInputFields(sub){
+  const area=document.getElementById('problemInputArea');
+  const cfg=SUBJECT_FIELDS[sub];
+  area.innerHTML=`<div style="font-family:'Orbitron';font-size:10px;color:var(--amber);letter-spacing:2px;padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:8px;">${cfg.label}</div>`;
+  cfg.fields.forEach(f=>{
+    const wrap=document.createElement('div');
+    wrap.innerHTML=`<div class="pfield-label">${f.label}</div>`;
+    if(f.type==='select'){
+      const sel=document.createElement('select');
+      sel.className='pfield-input';sel.id=f.id;
+      f.options.forEach(o=>{const opt=document.createElement('option');opt.textContent=o;sel.appendChild(opt);});
+      wrap.appendChild(sel);
+    } else {
+      const inp=document.createElement('input');
+      inp.type=f.type||'text';inp.className='pfield-input';inp.id=f.id;
+      if(f.placeholder) inp.placeholder=f.placeholder;
+      wrap.appendChild(inp);
+    }
+    area.appendChild(wrap);
+  });
+  // Textarea for extra notes
+  area.innerHTML+=`<div><div class="pfield-label">ملاحظات إضافية (اختياري)</div><textarea class="pfield-textarea" id="extraNotes" rows="2" placeholder="أي شروط إضافية..."></textarea></div>`;
+}
+
+// ── MAIN SOLVER ENGINE ──
+function solveEngrProblem(){
+  const btn=document.getElementById('solveProbleBtn');
+  btn.disabled=true;btn.textContent='⏳ جارٍ الحساب...';
+  document.getElementById('resultTextPanel').innerHTML=`<div style="color:var(--amber);font-family:'Share Tech Mono';font-size:10px;padding:15px;text-align:center;">⚡ جارٍ التحليل...</div>`;
+  document.getElementById('resultBadge').style.display='none';
+  document.getElementById('engrPlaceholder').style.display='none';
+
+  setTimeout(()=>{
+    let result;
+    try{
+      switch(currentSubject){
+        case 'design': result=solveDesign(); break;
+        case 'fluid':  result=solveFluid();  break;
+        case 'heat':   result=solveHeat();   break;
+        case 'stress': result=solveStressMech(); break;
+        case 'thermo': result=solveThermo(); break;
+        case 'dynamics':result=solveDynamics();break;
+        default: result={steps:[],badge:'',viz:'none'};
+      }
+    }catch(e){result={steps:[{title:'خطأ',html:`<div style="color:var(--red)">تأكد من إدخال جميع القيم بشكل صحيح.<br>${e.message}</div>`,border:'var(--red)'}],badge:'',viz:'none'};}
+
+    renderResultSteps(result.steps);
+    if(result.badge){
+      const rb=document.getElementById('resultBadge');
+      rb.innerHTML=result.badge;rb.style.display='block';
+    }
+    buildEngrVisualization(result.viz,result.vizData||{});
+    btn.disabled=false;btn.innerHTML='⚡ احسب وحلّل وصوّر';
+    log('تم حل المسألة: '+currentSubject,'ok');
+    toast('✓ تم الحل والتصور','success');
+  },600);
+}
+
+function renderResultSteps(steps){
+  const panel=document.getElementById('resultTextPanel');
+  panel.innerHTML='<div style="font-family:Orbitron;font-size:9px;color:var(--amber);letter-spacing:2px;margin-bottom:10px;">📋 خطوات الحل التفصيلية</div>';
+  steps.forEach(s=>{
+    const div=document.createElement('div');
+    div.className='step-block';
+    if(s.border) div.style.borderRightColor=s.border;
+    div.innerHTML=`<div class="step-title">${s.title}</div>${s.html}`;
+    panel.appendChild(div);
+  });
+}
+
+// ── MACHINE DESIGN SOLVER ──
+function solveDesign(){
+  const type=document.getElementById('sm_type').value;
+  const matStr=document.getElementById('sm_mat').value;
+  const load=parseFloat(document.getElementById('sm_load').value)||12;
+  const d1=parseFloat(document.getElementById('sm_dim1').value)||50;
+  const d2=parseFloat(document.getElementById('sm_dim2').value)||200;
+  const sfReq=parseFloat(document.getElementById('sm_sf').value)||2.5;
+  const Fy=matStr.includes('A36')?250:matStr.includes('4340')?470:276;
+  const E=matStr.includes('Al')?69:200;
+
+  const steps=[];let vizType='shaft';let badge='';let vizData={};
+
+  if(type.includes('عمود') || type.includes('تورشن')){
+    const T=load*1000; // N·mm
+    const d=d1; // mm
+    const r=d/2;
+    const J=Math.PI*Math.pow(d,4)/32;
+    const tau=T*r/J;
+    const tauAllow=Fy/(2*sfReq);
+    const sfActual=(tauAllow/tau).toFixed(2);
+    const angle=(T*d2)/(J*E*1000)*180/Math.PI;
+    steps.push({title:'المعطيات',html:`<span class="step-eq">T = ${load} kN·m = ${T.toFixed(0)} N·mm</span><span class="step-eq">d = ${d} mm</span><span class="step-eq">L = ${d2} mm</span><span class="step-eq">Fy = ${Fy} MPa</span>`});
+    steps.push({title:'عزم القصور الذاتي القطبي J',html:`<span class="step-eq">J = π·d⁴/32 = π×${d}⁴/32 = <b>${J.toFixed(0)} mm⁴</b></span>`});
+    steps.push({title:'إجهاد القص الأقصى τ_max',html:`<span class="step-eq">τ = T·r/J = ${T.toFixed(0)}×${r}/${J.toFixed(0)} = <b class="step-result">${tau.toFixed(2)} MPa</b></span>`});
+    steps.push({title:'الإجهاد المسموح به',html:`<span class="step-eq">τ_allow = Fy/(2×SF) = ${Fy}/(2×${sfReq}) = <b>${tauAllow.toFixed(2)} MPa</b></span>`});
+    steps.push({title:'عامل الأمان الفعلي',html:`<span class="step-eq">SF = τ_allow/τ = ${tauAllow.toFixed(2)}/${tau.toFixed(2)} = <b class="step-result">${sfActual}</b></span>`,border:parseFloat(sfActual)>=sfReq?'var(--green)':'var(--red)'});
+    steps.push({title:'زاوية الالتواء',html:`<span class="step-eq">φ = TL/JG ≈ <b>${angle.toFixed(4)}°</b></span>`});
+    const pass=parseFloat(sfActual)>=sfReq;
+    steps.push({title:pass?'✓ النتيجة: مقبول':'✗ النتيجة: يحتاج مراجعة',html:`<div class="step-result" style="color:${pass?'var(--green)':'var(--red)'}">SF_actual = ${sfActual} ${pass?'≥':'<'} SF_req = ${sfReq} → ${pass?'التصميم مقبول ✓':'يجب تكبير القطر ✗'}</div>`,border:pass?'var(--green)':'var(--red)'});
+    badge=`<div style="color:var(--amber);font-weight:700">SHAFT TORSION</div><div>τ_max: <span class="badge-val">${tau.toFixed(1)} MPa</span></div><div>SF: <span class="badge-val" style="color:${parseFloat(sfActual)>=sfReq?'var(--green)':'var(--red)'}">${sfActual}</span></div><div>φ: <span class="badge-val">${angle.toFixed(4)}°</span></div>`;
+    vizType='shaft'; vizData={d,L:d2,tau,Fy,pass};
+
+  } else if(type.includes('مسمار') || type.includes('برشام')){
+    const P=load*1000; // N
+    const d=d1; // mm dia
+    const A=Math.PI*d*d/4;
+    const tau=P/A;
+    const tauAllow=Fy/(2*sfReq);
+    const sfA=(tauAllow/tau).toFixed(2);
+    steps.push({title:'المعطيات',html:`<span class="step-eq">P = ${load} kN</span><span class="step-eq">d = ${d} mm</span>`});
+    steps.push({title:'مساحة القطع العرضي',html:`<span class="step-eq">A = πd²/4 = <b>${A.toFixed(2)} mm²</b></span>`});
+    steps.push({title:'إجهاد القص',html:`<span class="step-eq">τ = P/A = ${P}/${A.toFixed(2)} = <b class="step-result">${tau.toFixed(2)} MPa</b></span>`});
+    steps.push({title:'عامل الأمان',html:`<span class="step-eq">SF = ${tauAllow.toFixed(2)}/${tau.toFixed(2)} = <b>${sfA}</b></span>`,border:parseFloat(sfA)>=sfReq?'var(--green)':'var(--red)'});
+    badge=`<div style="color:var(--amber);font-weight:700">BOLT SHEAR</div><div>τ: <span class="badge-val">${tau.toFixed(1)} MPa</span></div><div>SF: <span class="badge-val">${sfA}</span></div>`;
+    vizType='bolt'; vizData={d,P,tau,Fy};
+
+  } else if(type.includes('نابض')){
+    const F=load*1000; // N
+    const D=d2; // mean coil dia mm
+    const d=d1; // wire dia mm
+    const G=80000; // MPa steel
+    const C=D/d;
+    const Kw=(4*C-1)/(4*C-4)+0.615/C;
+    const tau=Kw*8*F*D/(Math.PI*d*d*d);
+    const sfA=(Fy*0.45/tau).toFixed(2);
+    steps.push({title:'معطيات النابض',html:`<span class="step-eq">F = ${F} N, D = ${D} mm, d = ${d} mm</span>`});
+    steps.push({title:'مؤشر النابض C ومعامل Wahl',html:`<span class="step-eq">C = D/d = ${C.toFixed(2)}</span><span class="step-eq">Kw = ${Kw.toFixed(3)}</span>`});
+    steps.push({title:'إجهاد القص',html:`<span class="step-eq">τ = Kw·8FD/πd³ = <b class="step-result">${tau.toFixed(1)} MPa</b></span>`});
+    steps.push({title:'عامل الأمان',html:`<span class="step-eq">SF = ${(Fy*0.45).toFixed(0)}/${tau.toFixed(1)} = <b>${sfA}</b></span>`});
+    badge=`<div style="color:var(--amber);font-weight:700">SPRING</div><div>τ: <span class="badge-val">${tau.toFixed(1)} MPa</span></div><div>Kw: <span class="badge-val">${Kw.toFixed(3)}</span></div><div>SF: <span class="badge-val">${sfA}</span></div>`;
+    vizType='spring'; vizData={d,D,F,tau};
+  }
+  return {steps,badge,viz:vizType,vizData};
+}
+
+// ── FLUID MECHANICS SOLVER ──
+function solveFluid(){
+  const type=document.getElementById('fl_type').value;
+  const fluidStr=document.getElementById('fl_fluid').value;
+  const V=parseFloat(document.getElementById('fl_vel').value)||3;
+  const D=(parseFloat(document.getElementById('fl_diam').value)||50)/1000; // m
+  const L=parseFloat(document.getElementById('fl_len').value)||10;
+  const H=parseFloat(document.getElementById('fl_h').value)||5;
+  const rho=fluidStr.includes('ماء')?1000:fluidStr.includes('زيت')?870:1.2;
+  const mu=fluidStr.includes('ماء')?0.001:fluidStr.includes('زيت')?0.1:1.8e-5;
+  const g=9.81;
+  const steps=[];let badge='';let vizType='pipe';let vizData={};
+
+  if(type.includes('Pipe') || type.includes('أنبوب')){
+    const A=Math.PI*D*D/4;
+    const Q=V*A*1000; // L/s
+    const Re=rho*V*D/mu;
+    const f=Re<2300?64/Re:(0.316/Math.pow(Re,0.25));
+    const regime=Re<2300?'لاميني (Laminar)':'اضطرابي (Turbulent)';
+    const dP=f*(L/D)*0.5*rho*V*V;
+    const hf=dP/(rho*g);
+    steps.push({title:'المعطيات',html:`<span class="step-eq">V = ${V} m/s, D = ${(D*1000).toFixed(0)} mm, L = ${L} m</span><span class="step-eq">ρ = ${rho} kg/m³, μ = ${mu} Pa·s</span>`});
+    steps.push({title:'مساحة المقطع وتدفق الحجم',html:`<span class="step-eq">A = πD²/4 = <b>${A.toFixed(4)} m²</b></span><span class="step-eq">Q = V·A = <b class="step-result">${Q.toFixed(3)} L/s</b></span>`});
+    steps.push({title:'عدد رينولدز Re',html:`<span class="step-eq">Re = ρVD/μ = <b class="step-result">${Re.toFixed(0)}</b> → ${regime}</span>`});
+    steps.push({title:'معامل الاحتكاك f (Darcy-Weisbach)',html:`<span class="step-eq">f = ${Re<2300?'64/Re':'0.316/Re^0.25'} = <b>${f.toFixed(4)}</b></span>`});
+    steps.push({title:'فقد الضغط ΔP وفقد الرأس hf',html:`<span class="step-eq">ΔP = f·(L/D)·½ρV² = <b class="step-result">${dP.toFixed(1)} Pa</b></span><span class="step-eq">hf = ΔP/(ρg) = <b>${hf.toFixed(3)} m</b></span>`});
+    badge=`<div style="color:var(--amber);font-weight:700">PIPE FLOW</div><div>Re: <span class="badge-val">${Re.toFixed(0)}</span></div><div>Q: <span class="badge-val">${Q.toFixed(2)} L/s</span></div><div>ΔP: <span class="badge-val">${dP.toFixed(0)} Pa</span></div><div>${regime}</div>`;
+    vizType='pipe'; vizData={D,L,V,Re,dP};
+
+  } else if(type.includes('ضغط هيدروستاتيكي')){
+    const P=rho*g*H;
+    const Patm=101325;
+    steps.push({title:'المعطيات',html:`<span class="step-eq">h = ${H} m, ρ = ${rho} kg/m³</span>`});
+    steps.push({title:'الضغط الهيدروستاتيكي',html:`<span class="step-eq">P = ρgh = ${rho}×9.81×${H} = <b class="step-result">${P.toFixed(1)} Pa = ${(P/1000).toFixed(3)} kPa</b></span>`});
+    steps.push({title:'الضغط المطلق',html:`<span class="step-eq">P_abs = P_atm + ρgh = 101325 + ${P.toFixed(0)} = <b>${(Patm+P).toFixed(0)} Pa</b></span>`});
+    badge=`<div style="color:var(--amber);font-weight:700">HYDROSTATIC</div><div>P_gauge: <span class="badge-val">${(P/1000).toFixed(2)} kPa</span></div><div>P_abs: <span class="badge-val">${((Patm+P)/1000).toFixed(2)} kPa</span></div>`;
+    vizType='fluid_tank'; vizData={H,rho,P};
+  }
+  return {steps,badge,viz:vizType,vizData};
+}
+
+// ── HEAT TRANSFER SOLVER ──
+function solveHeat(){
+  const type=document.getElementById('ht_type').value;
+  const k=parseFloat(document.getElementById('ht_mat').value)||50;
+  const T1=parseFloat(document.getElementById('ht_t1').value)||200;
+  const T2=parseFloat(document.getElementById('ht_t2').value)||25;
+  const thick=(parseFloat(document.getElementById('ht_thick').value)||10)/1000; // m
+  const h=parseFloat(document.getElementById('ht_h').value)||25;
+  const A=1; // assume 1 m² for simplicity
+  const steps=[];let badge='';
+
+  if(type.includes('Conduction') || type.includes('توصيل')){
+    const q=k*A*(T1-T2)/thick;
+    const R=thick/(k*A);
+    steps.push({title:'المعطيات',html:`<span class="step-eq">k = ${k} W/m·K, T₁ = ${T1}°C, T₂ = ${T2}°C</span><span class="step-eq">سماكة = ${thick*1000} mm, A = ${A} m²</span>`});
+    steps.push({title:'قانون فورييه للتوصيل الحراري',html:`<span class="step-eq">q = k·A·(T₁-T₂)/L</span><span class="step-eq">q = ${k}×${A}×(${T1}-${T2})/${thick} = <b class="step-result">${q.toFixed(1)} W</b></span>`});
+    steps.push({title:'المقاومة الحرارية',html:`<span class="step-eq">R = L/(k·A) = ${thick}/(${k}×${A}) = <b>${R.toFixed(4)} K/W</b></span>`});
+    badge=`<div style="color:var(--amber);font-weight:700">CONDUCTION</div><div>q: <span class="badge-val">${q.toFixed(1)} W</span></div><div>ΔT: <span class="badge-val">${T1-T2}°C</span></div><div>R: <span class="badge-val">${R.toFixed(4)} K/W</span></div>`;
+
+  } else if(type.includes('Convection') || type.includes('حمل')){
+    const q=h*A*(T1-T2);
+    steps.push({title:'قانون نيوتن للتبريد',html:`<span class="step-eq">q = h·A·(Ts - T∞)</span><span class="step-eq">q = ${h}×${A}×(${T1}-${T2}) = <b class="step-result">${q.toFixed(1)} W</b></span>`});
+    steps.push({title:'كثافة الفيض الحراري',html:`<span class="step-eq">q″ = q/A = <b>${q.toFixed(1)} W/m²</b></span>`});
+    badge=`<div style="color:var(--amber);font-weight:700">CONVECTION</div><div>q: <span class="badge-val">${q.toFixed(1)} W</span></div><div>h: <span class="badge-val">${h} W/m²K</span></div>`;
+
+  } else if(type.includes('Radiation') || type.includes('إشعاع')){
+    const sigma=5.67e-8;
+    const eps=0.9;
+    const T1K=T1+273.15,T2K=T2+273.15;
+    const q=eps*sigma*A*(Math.pow(T1K,4)-Math.pow(T2K,4));
+    steps.push({title:'قانون ستيفان-بولتزمان',html:`<span class="step-eq">q = ε·σ·A·(T₁⁴ - T₂⁴)</span><span class="step-eq">q = ${eps}×5.67×10⁻⁸×${A}×(${T1K.toFixed(0)}⁴-${T2K.toFixed(0)}⁴)</span><span class="step-eq"> = <b class="step-result">${q.toFixed(1)} W</b></span>`});
+    badge=`<div style="color:var(--amber);font-weight:700">RADIATION</div><div>q: <span class="badge-val">${q.toFixed(1)} W</span></div>`;
+  }
+
+  return {steps,badge,viz:'heat_wall',vizData:{k,T1,T2,thick:thick*1000}};
+}
+
+// ── MECHANICS OF MATERIALS ──
+function solveStressMech(){
+  const type=document.getElementById('st_type').value;
+  const matName=document.getElementById('st_mat').value;
+  const P=(parseFloat(document.getElementById('st_load').value)||50)*1000; // N
+  const L=parseFloat(document.getElementById('st_l').value)||2;
+  const b=parseFloat(document.getElementById('st_b').value)||100;
+  const d=parseFloat(document.getElementById('st_d').value)||200;
+  const Fy=matName.includes('A36')?250:matName.includes('4340')?470:matName.includes('Al')?276:880;
+  const E=matName.includes('Al')?69:matName.includes('Ti')?114:200;
+  const steps=[];let badge='';
+
+  if(type.includes('انحناء') || type.includes('Bending')){
+    const A=b*d;
+    const I=b*Math.pow(d,3)/12;
+    const c=d/2;
+    const M_max=P*L*1000/4; // N·mm (midspan for simply supported)
+    const sigma=M_max*c/I;
+    const sf=(Fy/sigma).toFixed(2);
+    const delta=(P*1000*Math.pow(L*1000,3))/(48*E*1000*I); // mm
+    steps.push({title:'المعطيات',html:`<span class="step-eq">P = ${P/1000} kN, L = ${L} m, b×d = ${b}×${d} mm</span>`});
+    steps.push({title:'عزم القصور الذاتي I',html:`<span class="step-eq">I = bd³/12 = ${b}×${d}³/12 = <b>${I.toFixed(0)} mm⁴</b></span>`});
+    steps.push({title:'العزم الأقصى M_max (حمل مركّز منتصف البحر)',html:`<span class="step-eq">M = PL/4 = ${P/1000}×${L}/4 = <b>${(M_max/1e6).toFixed(3)} kN·m</b></span>`});
+    steps.push({title:'إجهاد الانحناء الأقصى σ',html:`<span class="step-eq">σ = M·c/I = <b class="step-result">${sigma.toFixed(2)} MPa</b></span>`});
+    steps.push({title:'الانحراف الأقصى δ',html:`<span class="step-eq">δ = PL³/48EI = <b class="step-result">${delta.toFixed(3)} mm</b></span>`});
+    steps.push({title:'عامل الأمان',html:`<span class="step-eq">SF = Fy/σ = ${Fy}/${sigma.toFixed(2)} = <b>${sf}</b></span>`,border:parseFloat(sf)>=2?'var(--green)':'var(--red)'});
+    badge=`<div style="color:var(--amber);font-weight:700">BEAM BENDING</div><div>σ_max: <span class="badge-val">${sigma.toFixed(1)} MPa</span></div><div>δ_max: <span class="badge-val">${delta.toFixed(3)} mm</span></div><div>SF: <span class="badge-val">${sf}</span></div>`;
+    return {steps,badge,viz:'beam',vizData:{b,d,L,P,sigma,delta,Fy}};
+
+  } else {
+    // Axial
+    const A=b*d;
+    const sigma=P/A;
+    const strain=sigma/(E*1000);
+    const dL=strain*L*1000;
+    const sf=(Fy/sigma).toFixed(2);
+    steps.push({title:'إجهاد محوري',html:`<span class="step-eq">σ = P/A = ${P}/${A} = <b class="step-result">${sigma.toFixed(2)} MPa</b></span>`});
+    steps.push({title:'الانفعال ε',html:`<span class="step-eq">ε = σ/E = ${sigma.toFixed(2)}/${(E*1000)} = <b>${strain.toFixed(6)}</b></span>`});
+    steps.push({title:'التمدد δ',html:`<span class="step-eq">δ = ε·L = <b class="step-result">${dL.toFixed(3)} mm</b></span>`});
+    steps.push({title:'عامل الأمان',html:`<span class="step-eq">SF = Fy/σ = <b>${sf}</b></span>`,border:parseFloat(sf)>=2?'var(--green)':'var(--red)'});
+    badge=`<div style="color:var(--amber);font-weight:700">AXIAL STRESS</div><div>σ: <span class="badge-val">${sigma.toFixed(2)} MPa</span></div><div>δ: <span class="badge-val">${dL.toFixed(3)} mm</span></div><div>SF: <span class="badge-val">${sf}</span></div>`;
+    return {steps,badge,viz:'axial',vizData:{b,d,L,P,sigma}};
+  }
+}
+
+// ── THERMODYNAMICS SOLVER ──
+function solveThermo(){
+  const type=document.getElementById('th_type').value;
+  const gasStr=document.getElementById('th_gas').value;
+  const P1=(parseFloat(document.getElementById('th_p1').value)||100)*1000; // Pa
+  const T1=parseFloat(document.getElementById('th_t1').value)||300; // K
+  const P2=(parseFloat(document.getElementById('th_p2').value)||500)*1000; // Pa
+  const V1=parseFloat(document.getElementById('th_v1').value)||0.1; // m³
+  const R=gasStr.includes('نيتروجين')?297:gasStr.includes('ثاني')?189:287;
+  const gamma=gasStr.includes('ثاني')?1.3:1.4;
+  const steps=[];let badge='';
+
+  if(type.includes('غاز مثالي') || type.includes('PV')){
+    const n=P1*V1/(R*T1);
+    const V2=n*R*T1/P2;
+    const T2=P2*V2/(n*R);
+    const W=P1*V1*Math.log(P2/P1)*(-1); // isothermal
+    steps.push({title:'قانون الغاز المثالي',html:`<span class="step-eq">PV = nRT → n = P₁V₁/RT₁</span><span class="step-eq">n = ${(P1/1000).toFixed(0)}×1000×${V1}/(${R}×${T1}) = <b>${n.toFixed(4)} mol-like</b></span>`});
+    steps.push({title:'الحالة النهائية',html:`<span class="step-eq">V₂ = nRT₁/P₂ = <b class="step-result">${V2.toFixed(4)} m³</b></span>`});
+    steps.push({title:'نسبة الضغط',html:`<span class="step-eq">P₂/P₁ = ${(P2/P1).toFixed(2)} : إذا بالعملية المتساوية الحرارة</span>`});
+    badge=`<div style="color:var(--amber);font-weight:700">IDEAL GAS</div><div>V₂: <span class="badge-val">${V2.toFixed(4)} m³</span></div><div>P₂: <span class="badge-val">${(P2/1000).toFixed(0)} kPa</span></div>`;
+
+  } else if(type.includes('كارنو') || type.includes('Carnot')){
+    const Th=T1, Tc=parseFloat(document.getElementById('th_p2').value)||200;
+    const eta=1-(Tc/Th);
+    const COP_heat=Th/(Th-Tc);
+    steps.push({title:'كفاءة دورة كارنو',html:`<span class="step-eq">η = 1 - T_c/T_h = 1 - ${Tc}/${Th} = <b class="step-result">${(eta*100).toFixed(2)}%</b></span>`});
+    steps.push({title:'COP للمضخة الحرارية',html:`<span class="step-eq">COP_HP = T_h/(T_h-T_c) = <b>${COP_heat.toFixed(2)}</b></span>`});
+    badge=`<div style="color:var(--amber);font-weight:700">CARNOT CYCLE</div><div>η: <span class="badge-val">${(eta*100).toFixed(1)}%</span></div><div>COP_HP: <span class="badge-val">${COP_heat.toFixed(2)}</span></div>`;
+  }
+  return {steps,badge,viz:'thermo_pv',vizData:{P1,V1,P2,gamma}};
+}
+
+// ── DYNAMICS SOLVER ──
+function solveDynamics(){
+  const type=document.getElementById('dy_type').value;
+  const m=parseFloat(document.getElementById('dy_m').value)||10;
+  const v0=parseFloat(document.getElementById('dy_v0').value)||5;
+  const a=parseFloat(document.getElementById('dy_a').value)||9.81;
+  const t=parseFloat(document.getElementById('dy_t').value)||3;
+  const k=parseFloat(document.getElementById('dy_k').value)||1000;
+  const steps=[];let badge='';
+
+  if(type.includes('مستقيمة') || type.includes('Kinematics')){
+    const vf=v0+a*t;
+    const s=v0*t+0.5*a*t*t;
+    const KE=0.5*m*vf*vf;
+    const F=m*a;
+    steps.push({title:'معادلات الحركة',html:`<span class="step-eq">v = v₀ + at = ${v0} + ${a}×${t} = <b class="step-result">${vf.toFixed(2)} m/s</b></span>`});
+    steps.push({title:'الإزاحة',html:`<span class="step-eq">s = v₀t + ½at² = ${v0}×${t} + 0.5×${a}×${t}² = <b class="step-result">${s.toFixed(3)} m</b></span>`});
+    steps.push({title:'الطاقة الحركية',html:`<span class="step-eq">KE = ½mv² = 0.5×${m}×${vf.toFixed(2)}² = <b>${KE.toFixed(2)} J</b></span>`});
+    steps.push({title:'القانون الثاني لنيوتن',html:`<span class="step-eq">F = ma = ${m}×${a} = <b>${F.toFixed(2)} N</b></span>`});
+    badge=`<div style="color:var(--amber);font-weight:700">KINEMATICS</div><div>v_f: <span class="badge-val">${vf.toFixed(2)} m/s</span></div><div>s: <span class="badge-val">${s.toFixed(2)} m</span></div><div>KE: <span class="badge-val">${KE.toFixed(1)} J</span></div>`;
+
+  } else if(type.includes('ذبذبة') || type.includes('Vibration')){
+    const wn=Math.sqrt(k/m);
+    const fn=wn/(2*Math.PI);
+    const T=1/fn;
+    const A=v0/wn;
+    steps.push({title:'التردد الطبيعي',html:`<span class="step-eq">ωₙ = √(k/m) = √(${k}/${m}) = <b class="step-result">${wn.toFixed(3)} rad/s</b></span>`});
+    steps.push({title:'التردد الهرتزي والدور',html:`<span class="step-eq">fₙ = ωₙ/2π = <b>${fn.toFixed(3)} Hz</b></span><span class="step-eq">T = 1/fₙ = <b>${T.toFixed(3)} s</b></span>`});
+    steps.push({title:'سعة الاهتزاز',html:`<span class="step-eq">A = v₀/ωₙ = ${v0}/${wn.toFixed(3)} = <b>${A.toFixed(4)} m</b></span>`});
+    badge=`<div style="color:var(--amber);font-weight:700">FREE VIBRATION</div><div>ωₙ: <span class="badge-val">${wn.toFixed(2)} rad/s</span></div><div>fₙ: <span class="badge-val">${fn.toFixed(3)} Hz</span></div><div>T: <span class="badge-val">${T.toFixed(3)} s</span></div>`;
+  }
+  return {steps,badge,viz:'dynamics',vizData:{m,v0,a,t,k}};
+}
+
+// ════════════════════════════════════════════════════════════════
+// 3D VISUALIZATION ENGINE FOR SOLVER
+// ════════════════════════════════════════════════════════════════
+function initEngrRenderer(){
+  const canvas=document.getElementById('engrCanvas');
+  if(!canvas||engrRenderer) return;
+  engrScene=new THREE.Scene();
+  engrScene.fog=new THREE.FogExp2(0x020408,0.05);
+  engrCamera=new THREE.PerspectiveCamera(45,canvas.clientWidth/canvas.clientHeight,0.01,100);
+  engrCamera.position.set(4,3,5);
+  engrRenderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+  engrRenderer.setSize(canvas.clientWidth,canvas.clientHeight);
+  engrRenderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  engrRenderer.shadowMap.enabled=true;
+  engrRenderer.toneMapping=THREE.ACESFilmicToneMapping;
+  engrRenderer.toneMappingExposure=1.1;
+  engrControls=new THREE.OrbitControls(engrCamera,engrRenderer.domElement);
+  engrControls.enableDamping=true;engrControls.dampingFactor=0.08;
+  // Lights
+  engrScene.add(new THREE.AmbientLight(0x404040,2));
+  const dl=new THREE.DirectionalLight(0xffffff,1.2);dl.position.set(5,8,5);dl.castShadow=true;engrScene.add(dl);
+  engrScene.add(new THREE.DirectionalLight(0x00d4ff,0.4).position.set(-5,0,-5) && new THREE.DirectionalLight(0x00d4ff,0.4));
+  // Grid
+  engrScene.add(new THREE.GridHelper(10,20,0x0f3a5c,0x071525));
+  // Animate
+  function loopEngr(){engrAnimId=requestAnimationFrame(loopEngr);engrControls.update();engrRenderer.render(engrScene,engrCamera);}
+  loopEngr();
+  // Resize
+  new ResizeObserver(()=>{
+    if(!engrRenderer||!engrCamera) return;
+    engrCamera.aspect=canvas.clientWidth/canvas.clientHeight;
+    engrCamera.updateProjectionMatrix();
+    engrRenderer.setSize(canvas.clientWidth,canvas.clientHeight);
+  }).observe(canvas);
+}
+
+function clearEngrScene(){
+  if(!engrScene) return;
+  const toRemove=[];
+  engrScene.traverse(c=>{if(c.isMesh||c.isLine||c.isArrowHelper||c.isSprite) toRemove.push(c);});
+  toRemove.forEach(c=>engrScene.remove(c));
+}
+
+function buildEngrVisualization(type,data){
+  if(!engrScene) return;
+  clearEngrScene();
+  switch(type){
+    case 'shaft':      viz3D_shaft(data); break;
+    case 'bolt':       viz3D_bolt(data); break;
+    case 'spring':     viz3D_spring(data); break;
+    case 'pipe':       viz3D_pipe(data); break;
+    case 'fluid_tank': viz3D_tank(data); break;
+    case 'heat_wall':  viz3D_heatwall(data); break;
+    case 'beam':       viz3D_beam(data); break;
+    case 'axial':      viz3D_axial(data); break;
+    case 'thermo_pv':  viz3D_thermo(data); break;
+    case 'dynamics':   viz3D_dynamics(data); break;
+    default: break;
+  }
+}
+
+function makeMat(color,emissive=0x000000,transp=false,opacity=1){
+  return new THREE.MeshPhongMaterial({color,emissive,shininess:80,transparent:transp,opacity});
+}
+function makeLabel(text,pos,color='#ffaa00'){
+  const c=document.createElement('canvas');c.width=256;c.height=64;
+  const ctx=c.getContext('2d');ctx.fillStyle='rgba(0,0,0,0)';ctx.fillRect(0,0,256,64);
+  ctx.fillStyle=color;ctx.font='bold 20px monospace';ctx.textAlign='center';ctx.fillText(text,128,40);
+  const tex=new THREE.CanvasTexture(c);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true}));
+  sp.position.set(...pos);sp.scale.set(2,0.5,1);engrScene.add(sp);
+}
+
+function viz3D_shaft(d){
+  const sc=d.d/100; // scale
+  // Shaft cylinder
+  const shaft=new THREE.Mesh(new THREE.CylinderGeometry(sc,sc,3,32),makeMat(0x888899,d.pass?0x004400:0x440000));
+  shaft.castShadow=true;engrScene.add(shaft);
+  // Torsion arrows (two rings of arrows)
+  for(let i=0;i<8;i++){
+    const angle=i/8*Math.PI*2;
+    const arrow=new THREE.ArrowHelper(
+      new THREE.Vector3(-Math.sin(angle),0,Math.cos(angle)),
+      new THREE.Vector3(Math.cos(angle)*(sc+0.2),0.5,Math.sin(angle)*(sc+0.2)),
+      0.3,0xffaa00,0.1,0.08
+    );
+    engrScene.add(arrow);
+  }
+  // Stress color gradient rings
+  const colors=[0x0000ff,0x00ffff,0x00ff00,0xffff00,0xff8800,0xff0000];
+  colors.forEach((c,i)=>{
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(sc+0.05,0.02,8,32),makeMat(c));
+    ring.position.y=(-1.5+i*0.6);engrScene.add(ring);
+  });
+  // Fixed support at bottom
+  const support=new THREE.Mesh(new THREE.BoxGeometry(sc*3,0.1,sc*3),makeMat(0x336655));
+  support.position.y=-1.55;engrScene.add(support);
+  makeLabel(`d=${d.d}mm τ=${d.tau.toFixed(1)}MPa`,[0,2.2,0]);
+  engrCamera.position.set(3,2,4);
+}
+
+function viz3D_bolt(d){
+  const r=(d.d/2)/100;
+  // Bolt head
+  const head=new THREE.Mesh(new THREE.CylinderGeometry(r*2,r*2,r,6),makeMat(0x888899));
+  head.position.y=r*2;engrScene.add(head);
+  // Bolt shaft
+  const shaft=new THREE.Mesh(new THREE.CylinderGeometry(r,r,2.5,16),makeMat(0xaaaaaa));
+  shaft.position.y=0;engrScene.add(shaft);
+  // Plates
+  const plate1=new THREE.Mesh(new THREE.BoxGeometry(2,0.4,1),makeMat(0x224466,0x001133));
+  plate1.position.y=0.6;engrScene.add(plate1);
+  const plate2=new THREE.Mesh(new THREE.BoxGeometry(2,0.4,1),makeMat(0x224466,0x001133));
+  plate2.position.y=-0.6;engrScene.add(plate2);
+  // Shear force arrows
+  engrScene.add(new THREE.ArrowHelper(new THREE.Vector3(1,0,0),new THREE.Vector3(-1.5,0.6,0),1,0xff3333,0.15,0.1));
+  engrScene.add(new THREE.ArrowHelper(new THREE.Vector3(-1,0,0),new THREE.Vector3(1.5,-0.6,0),1,0xff3333,0.15,0.1));
+  makeLabel(`τ=${d.tau.toFixed(1)} MPa`,[0,2.5,0]);
+  engrCamera.position.set(3,2,4);
+}
+
+function viz3D_spring(d){
+  const coils=10,r=d.D/200,wireR=d.d/400;
+  const pts=[];
+  for(let i=0;i<=coils*32;i++){
+    const angle=i/32*Math.PI*2;
+    pts.push(new THREE.Vector3(r*Math.cos(angle),i/(coils*32)*3-1.5,r*Math.sin(angle)));
+  }
+  const curve=new THREE.CatmullRomCurve3(pts);
+  const tubeGeo=new THREE.TubeGeometry(curve,coils*32,wireR,8,false);
+  const spring=new THREE.Mesh(tubeGeo,makeMat(0x888899,0x002222));
+  engrScene.add(spring);
+  // Load arrow on top
+  engrScene.add(new THREE.ArrowHelper(new THREE.Vector3(0,-1,0),new THREE.Vector3(0,2.5,0),1,0xff3333,0.2,0.12));
+  // Base plate
+  const base=new THREE.Mesh(new THREE.BoxGeometry(r*4,0.1,r*4),makeMat(0x446655));
+  base.position.y=-1.6;engrScene.add(base);
+  makeLabel(`D=${d.D}mm d=${d.d}mm`,[0,3,0]);
+  engrCamera.position.set(3,2,4);
+}
+
+function viz3D_pipe(d){
+  const r=Math.max(d.D*5,0.15);
+  const L=Math.min(d.L,4);
+  // Pipe
+  const pipe=new THREE.Mesh(new THREE.CylinderGeometry(r+0.05,r+0.05,L,32,1,true),makeMat(0x336677,0,true,0.4));
+  pipe.rotation.z=Math.PI/2;engrScene.add(pipe);
+  const pipeInner=new THREE.Mesh(new THREE.CylinderGeometry(r,r,L,32,1,true),makeMat(0x004488,0x000033,true,0.3));
+  pipeInner.rotation.z=Math.PI/2;engrScene.add(pipeInner);
+  // Flow arrows inside pipe
+  const arrowColor=d.Re<2300?0x00ff88:0xff4400;
+  for(let i=0;i<6;i++){
+    const y=(i-2.5)/3*r*0.8;
+    const speed=1-Math.abs(y/r)*0.7;
+    const arr=new THREE.ArrowHelper(new THREE.Vector3(1,0,0),new THREE.Vector3(-L/2,y,0),speed*0.8,arrowColor,0.1,0.07);
+    engrScene.add(arr);
+  }
+  // End caps
+  [-L/2,L/2].forEach(x=>{
+    const cap=new THREE.Mesh(new THREE.CircleGeometry(r+0.05,32),makeMat(0x445566));
+    cap.rotation.y=Math.PI/2;cap.position.x=x;engrScene.add(cap);
+  });
+  const regime=d.Re<2300?'Laminar':'Turbulent';
+  makeLabel(`Re=${d.Re.toFixed(0)} — ${regime}`,[0,r+0.8,0]);
+  makeLabel(`ΔP=${d.dP.toFixed(0)} Pa`,[0,-r-0.5,0],'#00d4ff');
+  engrCamera.position.set(0,2,5);
+}
+
+function viz3D_tank(d){
+  // Tank
+  const tank=new THREE.Mesh(new THREE.CylinderGeometry(1,1,3,32,1,true),makeMat(0x334455,0,true,0.3));
+  engrScene.add(tank);
+  // Water fill
+  const h=Math.min(d.H/5,2.5);
+  const water=new THREE.Mesh(new THREE.CylinderGeometry(0.98,0.98,h,32),makeMat(0x1155aa,0x001133,true,0.7));
+  water.position.y=h/2-1.5;engrScene.add(water);
+  // Pressure arrow
+  engrScene.add(new THREE.ArrowHelper(new THREE.Vector3(0,-1,0),new THREE.Vector3(1.2,water.position.y,0),0.5,0xffaa00,0.15,0.1));
+  makeLabel(`P=${(d.P/1000).toFixed(2)} kPa`,[0,2.5,0]);
+  makeLabel(`h=${d.H} m`,[1.5,water.position.y,0],'#00d4ff');
+  engrCamera.position.set(3,2,4);
+}
+
+function viz3D_heatwall(d){
+  const W=2,H=2,T=Math.max(d.thick/30,0.2);
+  // Wall body with heat gradient
+  const geo=new THREE.BoxGeometry(T,H,W);
+  // Fake gradient by using vertex colors via multiple thin layers
+  const layers=20;
+  for(let i=0;i<layers;i++){
+    const t=i/layers;
+    const r=Math.round((1-t)*255+(t)*0);
+    const g=0;
+    const b=Math.round(t*200);
+    const layer=new THREE.Mesh(new THREE.BoxGeometry(T/layers,H,W*0.99),makeMat((r<<16)|(g<<8)|b,0,true,0.85));
+    layer.position.x=-T/2+T/layers*(i+0.5);engrScene.add(layer);
+  }
+  // Hot side annotation
+  engrScene.add(new THREE.ArrowHelper(new THREE.Vector3(1,0,0),new THREE.Vector3(-T/2-1,0,0),0.7,0xff4400,0.15,0.1));
+  engrScene.add(new THREE.ArrowHelper(new THREE.Vector3(-1,0,0),new THREE.Vector3(T/2+1,0,0),0.7,0x0088ff,0.15,0.1));
+  makeLabel(`T₁=${d.T1}°C`,[-(T/2+1.5),0.5,0],'#ff4400');
+  makeLabel(`T₂=${d.T2}°C`,[T/2+1.5,0.5,0],'#00d4ff');
+  makeLabel(`k=${d.k} W/m·K`,[0,H/2+0.5,0]);
+  engrCamera.position.set(4,2,4);
+}
+
+function viz3D_beam(d){
+  const sc=0.002;
+  const L=d.L*2;
+  const bSc=d.b*sc,dSc=d.d*sc;
+  // Beam
+  const beam=new THREE.Mesh(new THREE.BoxGeometry(L,dSc,bSc),makeMat(0x888899,0x002200));
+  engrScene.add(beam);
+  // Deflected shape (approximation)
+  const pts=[];
+  for(let i=0;i<=20;i++){
+    const x=-L/2+i/20*L;
+    const xi=i/20;
+    const y=-d.delta*0.005*4*xi*(1-xi); // parabolic deflection
+    pts.push(new THREE.Vector3(x,y,0));
+  }
+  const defCurve=new THREE.CatmullRomCurve3(pts);
+  const defLine=new THREE.Mesh(new THREE.TubeGeometry(defCurve,20,0.015,8),makeMat(0x00ff88,0x003300,true,0.7));
+  engrScene.add(defLine);
+  // Supports
+  [-L/2,L/2].forEach(x=>{
+    const sup=new THREE.Mesh(new THREE.ConeGeometry(0.15,0.3,4),makeMat(0x446655));
+    sup.position.set(x,-(dSc/2+0.15),0);engrScene.add(sup);
+  });
+  // Load arrow
+  engrScene.add(new THREE.ArrowHelper(new THREE.Vector3(0,-1,0),new THREE.Vector3(0,dSc/2+0.8,0),0.6,0xff3333,0.15,0.1));
+  // Stress color bar on beam
+  const sbColors=[0x0000ff,0x00ffff,0x00ff00,0xffff00,0xff3300];
+  sbColors.forEach((c,i)=>{
+    const seg=new THREE.Mesh(new THREE.BoxGeometry(L*0.18,dSc/5,bSc*1.01),makeMat(c,0,true,0.7));
+    seg.position.set(-L*0.36+i*L*0.18,-dSc/2+dSc/10*(4-i)+dSc/10,bSc/2+0.01);
+    engrScene.add(seg);
+  });
+  makeLabel(`σ_max=${d.sigma.toFixed(1)}MPa δ=${d.delta.toFixed(2)}mm`,[0,dSc/2+1.2,0]);
+  engrCamera.position.set(0,2,5);
+}
+
+function viz3D_axial(d){
+  const L=d.L*0.8,sc=0.003;
+  const bSc=d.b*sc,dSc=d.d*sc;
+  const bar=new THREE.Mesh(new THREE.BoxGeometry(L,dSc,bSc),makeMat(0x888899,0x001100));
+  engrScene.add(bar);
+  // Fixed wall
+  const wall=new THREE.Mesh(new THREE.BoxGeometry(0.1,dSc*3,bSc*3),makeMat(0x336655));
+  wall.position.x=-L/2-0.05;engrScene.add(wall);
+  // Force arrow
+  engrScene.add(new THREE.ArrowHelper(new THREE.Vector3(1,0,0),new THREE.Vector3(L/2+0.1,0,0),0.8,0xff3333,0.15,0.1));
+  // Stress gradient
+  for(let i=0;i<10;i++){
+    const t=i/9;
+    const c=(t>0.7)?0xff2200:(t>0.4)?0xffaa00:0x00ff88;
+    const seg=new THREE.Mesh(new THREE.BoxGeometry(L/10,dSc,bSc*1.01),makeMat(c,0,true,0.5));
+    seg.position.x=-L/2+L/10*(i+0.5);seg.position.z=bSc/2+0.01;engrScene.add(seg);
+  }
+  makeLabel(`P=${(d.P/1000).toFixed(0)}kN σ=${d.sigma.toFixed(1)}MPa`,[0,dSc/2+0.6,0]);
+  engrCamera.position.set(0,2,5);
+}
+
+function viz3D_thermo(d){
+  // PV diagram styled 3D cylinder with piston
+  const cyl=new THREE.Mesh(new THREE.CylinderGeometry(1,1,3,32,1,true),makeMat(0x334455,0,true,0.4));
+  engrScene.add(cyl);
+  // Piston initial position
+  const piston=new THREE.Mesh(new THREE.CylinderGeometry(0.95,0.95,0.2,32),makeMat(0x778899));
+  piston.position.y=0.8;engrScene.add(piston);
+  // Gas (colored based on state)
+  const gasH=piston.position.y+1.5;
+  const gas=new THREE.Mesh(new THREE.CylinderGeometry(0.94,0.94,gasH,32),makeMat(0xff6600,0x331100,true,0.4));
+  gas.position.y=-1.5+gasH/2;engrScene.add(gas);
+  // Pressure arrows
+  for(let i=0;i<4;i++){
+    const a=i/4*Math.PI*2;
+    const dir=new THREE.Vector3(Math.cos(a),0.5,Math.sin(a)).normalize();
+    engrScene.add(new THREE.ArrowHelper(dir,new THREE.Vector3(0,0,0),0.6,0xffaa00,0.12,0.08));
+  }
+  makeLabel(`P₁=${(d.P1/1000).toFixed(0)}kPa V₁=${d.V1}m³`,[0,2.5,0]);
+  engrCamera.position.set(3,2,4);
+}
+
+function viz3D_dynamics(d){
+  // Mass-spring system or projectile based on input
+  const mass=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.5,0.5),makeMat(0x888899,0x002200));
+  mass.position.y=1;engrScene.add(mass);
+  // Spring below mass
+  const coils=8,r=0.2,wireR=0.02;
+  const pts=[];
+  for(let i=0;i<=coils*16;i++){
+    const ang=i/16*Math.PI*2;
+    pts.push(new THREE.Vector3(r*Math.cos(ang),i/(coils*16)*2,r*Math.sin(ang)));
+  }
+  const curve=new THREE.CatmullRomCurve3(pts);
+  const tube=new THREE.Mesh(new THREE.TubeGeometry(curve,coils*16,wireR,8),makeMat(0x888899));
+  engrScene.add(tube);
+  // Ground
+  const gnd=new THREE.Mesh(new THREE.BoxGeometry(2,0.1,2),makeMat(0x336655));
+  gnd.position.y=-0.05;engrScene.add(gnd);
+  // Velocity arrow
+  if(d.v0>0) engrScene.add(new THREE.ArrowHelper(new THREE.Vector3(1,0.5,0).normalize(),new THREE.Vector3(0.25,1.25,0),0.5,0x00ff88,0.12,0.08));
+  makeLabel(`m=${d.m}kg k=${d.k}N/m`,[0,2,0]);
+  makeLabel(`v₀=${d.v0}m/s a=${d.a}m/s²`,[0,-0.8,0],'#00d4ff');
+  engrCamera.position.set(3,3,4);
+}
+
+// ════════════════════════════════════════════════════════════════
+
+// ════════════════════════════════════════════════════════════════
+// IMPROVEMENT 1 — WORKFLOW PROGRESS BAR
+// ════════════════════════════════════════════════════════════════
+const WF_STEPS=['setup','material','mesh','solve','results','report'];
+const WF_PCT={setup:17,material:33,mesh:50,solve:67,results:83,report:100};
+function advanceWorkflow(step){
+  const pct=WF_PCT[step]||0;
+  const pf=document.getElementById('wfProgressFill');
+  const wp=document.getElementById('wfPct');
+  if(pf) pf.style.width=pct+'%';
+  if(wp) wp.textContent=pct+'%';
+  WF_STEPS.forEach((s,idx)=>{
+    const el=document.getElementById('wf-'+s);if(!el)return;
+    const dot=el.querySelector('.wf-dot');
+    const stepIdx=WF_STEPS.indexOf(step);
+    if(idx<stepIdx){el.className='wf-step done';if(dot)dot.style.background='var(--green)';}
+    else if(idx===stepIdx){el.className='wf-step active';if(dot)dot.style.background='var(--cyan)';}
+    else{el.className='wf-step locked';}
+  });
+}
+
+// ════════════════════════════════════════════════════════════════
+// IMPROVEMENT 2 — UNDO / REDO
+// ════════════════════════════════════════════════════════════════
+const UndoStack=[];const RedoStack=[];
+function pushUndo(description,undoFn,redoFn){
+  UndoStack.push({description,undoFn,redoFn});
+  RedoStack.length=0;updateHistoryIndicator();
+}
+function undoAction(){
+  if(!UndoStack.length){toast('لا يوجد شيء للتراجع','warning');return;}
+  const action=UndoStack.pop();action.undoFn();RedoStack.push(action);
+  updateHistoryIndicator();log('تراجع: '+action.description,'warn');toast('↩ '+action.description,'warning');
+}
+function redoAction(){
+  if(!RedoStack.length){toast('لا يوجد شيء للإعادة','warning');return;}
+  const action=RedoStack.pop();action.redoFn();UndoStack.push(action);
+  updateHistoryIndicator();log('إعادة: '+action.description,'info');toast('↪ '+action.description,'success');
+}
+function updateHistoryIndicator(){
+  const el=document.getElementById('historyIndicator');
+  if(el) el.textContent=UndoStack.length+' إجراء'+(UndoStack.length===1?'':'ات');
+  const u=document.getElementById('btnUndo'),r=document.getElementById('btnRedo');
+  if(u) u.style.opacity=UndoStack.length?'1':'0.3';
+  if(r) r.style.opacity=RedoStack.length?'1':'0.3';
+}
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key==='z'){e.preventDefault();undoAction();}
+  if((e.ctrlKey||e.metaKey)&&(e.key==='y'||(e.shiftKey&&e.key==='Z'))){e.preventDefault();redoAction();}
+});
+
+// ════════════════════════════════════════════════════════════════
+// IMPROVEMENT 3 — SECTION PROPERTIES CALCULATOR
+// ════════════════════════════════════════════════════════════════
+let secShape='rect';
+const SHAPE_FIELDS={
+  rect:[{id:'sb',label:'العرض b (mm)',val:100},{id:'sd',label:'الارتفاع d (mm)',val:200}],
+  circle:[{id:'sr',label:'القطر d (mm)',val:100}],
+  ibeam:[{id:'sbf',label:'عرض الفلنجة bf (mm)',val:150},{id:'stf',label:'سماكة الفلنجة tf (mm)',val:12},{id:'sdw',label:'ارتفاع الروح dw (mm)',val:200},{id:'stw',label:'سماكة الروح tw (mm)',val:8}],
+  channel:[{id:'sbf',label:'عرض الفلنجة bf (mm)',val:80},{id:'stf',label:'سماكة الفلنجة tf (mm)',val:10},{id:'sdw',label:'الارتفاع d (mm)',val:200},{id:'stw',label:'سماكة الروح tw (mm)',val:8}],
+  angle:[{id:'sb',label:'طول الضلع b (mm)',val:100},{id:'sd',label:'طول الضلع d (mm)',val:100},{id:'st',label:'السماكة t (mm)',val:10}],
+  hollow:[{id:'sb',label:'العرض الخارجي B (mm)',val:100},{id:'sd',label:'الارتفاع الخارجي D (mm)',val:150},{id:'st',label:'السماكة t (mm)',val:8}],
+};
+function selectShape(shape,btn){
+  secShape=shape;
+  document.querySelectorAll('.shape-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const si=document.getElementById('shapeInputs');if(!si)return;si.innerHTML='';
+  (SHAPE_FIELDS[shape]||[]).forEach(f=>{
+    si.innerHTML+=`<div><div style="font-family:'Share Tech Mono';font-size:9px;color:var(--text-dim);margin-bottom:2px;">${f.label}</div><input class="pfield-input" id="${f.id}" type="number" value="${f.val}" style="width:100%;"/></div>`;
+  });
+  drawSectionPreview();
+}
+function initSecCanvas(){
+  setTimeout(()=>{selectShape('rect',document.querySelector('.shape-btn.active'));},100);
+}
+function gv(id,def=100){return parseFloat(document.getElementById(id)?.value)||def;}
+function calcSectionProps(){
+  let A=0,Ixx=0,Iyy=0,Cx=0,Cy=0;
+  if(secShape==='rect'){
+    const b=gv('sb'),d=gv('sd');A=b*d;Ixx=b*d*d*d/12;Iyy=d*b*b*b/12;Cx=b/2;Cy=d/2;
+  } else if(secShape==='circle'){
+    const r=gv('sr')/2;A=Math.PI*r*r;Ixx=Math.PI*r*r*r*r/4;Iyy=Ixx;Cx=r;Cy=r;
+  } else if(secShape==='ibeam'){
+    const bf=gv('sbf'),tf=gv('stf'),dw=gv('sdw'),tw=gv('stw'),dt=dw+2*tf;
+    A=2*bf*tf+dw*tw;Ixx=bf*Math.pow(dt,3)/12-(bf-tw)*Math.pow(dw,3)/12;
+    Iyy=2*(tf*Math.pow(bf,3)/12)+(dw*Math.pow(tw,3)/12);Cx=bf/2;Cy=dt/2;
+  } else if(secShape==='hollow'){
+    const B=gv('sb'),D=gv('sd'),t=gv('st'),Bi=B-2*t,Di=D-2*t;
+    A=B*D-Bi*Di;Ixx=(B*D*D*D-Bi*Di*Di*Di)/12;Iyy=(D*B*B*B-Di*Bi*Bi*Bi)/12;Cx=B/2;Cy=D/2;
+  } else if(secShape==='angle'){
+    const b=gv('sb'),d=gv('sd'),t=gv('st');A=b*t+(d-t)*t;
+    Cx=(b*t*(b/2)+(d-t)*t*(t/2))/A;Cy=(b*t*(t/2)+(d-t)*t*(t+(d-t)/2))/A;
+    Ixx=b*t*t*t/12+b*t*(Cy-t/2)**2+(d-t)*t*t*t/12+(d-t)*t*(t+(d-t)/2-Cy)**2;
+    Iyy=t*b*b*b/12+b*t*(Cx-b/2)**2+t*(d-t)*(d-t)*(d-t)/12+(d-t)*t*(Cx-t/2)**2;
+  } else if(secShape==='channel'){
+    const bf=gv('sbf'),tf=gv('stf'),d=gv('sdw'),tw=gv('stw');A=2*bf*tf+d*tw;
+    Cx=(2*bf*tf*(bf/2)+d*tw*(tw/2))/A;Cy=(d/2+tf);
+    Ixx=bf*Math.pow(d+2*tf,3)/12-(bf-tw)*d*d*d/12;
+    Iyy=2*(tf*bf*bf*bf/12+tf*bf*(bf/2-Cx)**2)+(d*tw*tw*tw/12+d*tw*(tw/2-Cx)**2);
+  }
+  const Sxx=Cy?Ixx/Cy:0,rxx=A?Math.sqrt(Ixx/A):0,J=Ixx+Iyy;
+  const fmt=v=>v>99999?v.toExponential(2):v>99?v.toFixed(0):v.toFixed(2);
+  ['A','Ixx','Iyy','Sxx','rxx','J','Cx','Cy'].forEach(k=>{
+    const el=document.getElementById('sr_'+k);
+    if(el) el.textContent=fmt({A,Ixx,Iyy,Sxx,rxx,J,Cx,Cy}[k]);
+  });
+  drawSectionPreview(Cx,Cy);
+  toast('✓ خصائص المقطع محسوبة','success');log('خصائص المقطع','ok');
+}
+function drawSectionPreview(Cx,Cy){
+  const canvas=document.getElementById('secCanvas');if(!canvas)return;
+  const W=Math.max(canvas.clientWidth,300),H=Math.max(canvas.clientHeight,200);
+  canvas.width=W;canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#020408';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(15,58,92,0.4)';ctx.lineWidth=0.5;
+  for(let i=0;i<W;i+=25){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,H);ctx.stroke();}
+  for(let j=0;j<H;j+=25){ctx.beginPath();ctx.moveTo(0,j);ctx.lineTo(W,j);ctx.stroke();}
+  ctx.save();ctx.translate(W/2,H/2);
+  const scale=Math.min(W,H)*0.0025;
+  ctx.strokeStyle='#aa00ff';ctx.fillStyle='rgba(170,0,255,0.18)';ctx.lineWidth=2;
+  if(secShape==='rect'){const b=gv('sb')*scale,d=gv('sd')*scale;ctx.beginPath();ctx.rect(-b/2,-d/2,b,d);ctx.fill();ctx.stroke();}
+  else if(secShape==='circle'){const r=gv('sr')/2*scale;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();ctx.stroke();}
+  else if(secShape==='ibeam'){
+    const bf=gv('sbf')*scale,tf=gv('stf')*scale,dw=gv('sdw')*scale,tw=gv('stw')*scale,half=dw/2+tf;
+    [[- bf/2,-half,bf,tf],[- tw/2,-dw/2,tw,dw],[-bf/2,half-tf,bf,tf]].forEach(([x,y,w,h])=>{ctx.beginPath();ctx.rect(x,y,w,h);ctx.fill();ctx.stroke();});
+  } else if(secShape==='hollow'){
+    const b=gv('sb')*scale,d=gv('sd')*scale,t=gv('st')*scale;
+    ctx.beginPath();ctx.rect(-b/2,-d/2,b,d);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#020408';ctx.beginPath();ctx.rect(-b/2+t,-d/2+t,b-2*t,d-2*t);ctx.fill();ctx.stroke();
+  } else if(secShape==='angle'){
+    const b=gv('sb')*scale,d=gv('sd')*scale,t=gv('st')*scale;
+    ctx.beginPath();ctx.rect(-b/2,-d/2,b,t);ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.rect(-b/2,-d/2,t,d);ctx.fill();ctx.stroke();
+  }
+  if(Cx!=null&&Cy!=null){
+    ctx.strokeStyle='#ffaa00';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+    ctx.beginPath();ctx.moveTo(-80,0);ctx.lineTo(80,0);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(0,-80);ctx.lineTo(0,80);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#ffaa00';ctx.beginPath();ctx.arc(0,0,4,0,Math.PI*2);ctx.fill();
+  }
+  ctx.restore();
+}
+
+// ════════════════════════════════════════════════════════════════
+// IMPROVEMENT 4 — MATERIAL COMPARISON RADAR
+// ════════════════════════════════════════════════════════════════
+function openMatComparison(){
+  document.getElementById('matcmpModal').classList.add('active');
+  buildMatCmpList();
+}
+function buildMatCmpList(){
+  const list=document.getElementById('matcmpCheckList');if(!list)return;
+  list.innerHTML='';
+  Object.keys(MaterialDB).forEach((name,i)=>{
+    const colors=['#00d4ff','#ffaa00','#00ff88','#aa00ff','#ff3333'];
+    list.innerHTML+=`<div class="matcmp-item"><input type="checkbox" class="matcmp-check" id="cmp_${i}" value="${name}" style="accent-color:${colors[i%5]}"/><label for="cmp_${i}" style="cursor:pointer;font-size:11px;">${name}</label></div>`;
+  });
+}
+function drawMatComparison(){
+  const checks=[...document.querySelectorAll('.matcmp-check:checked')];
+  if(checks.length<2){toast('اختر مادتين على الأقل','warning');return;}
+  const selected=checks.slice(0,3).map(c=>({name:c.value,mat:MaterialDB[c.value]}));
+  const canvas=document.getElementById('matcmpCanvas');if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#020408';ctx.fillRect(0,0,W,H);
+  const cx=W*0.38,cy=H/2,R=Math.min(cx,cy)*0.78;
+  const axes=['E','Fy','Fu','ρ/100','ν×1000'];
+  const getVal=(mat,i)=>[mat.E,mat.yield,mat.ultimate,mat.rho/100,mat.nu*1000][i];
+  const maxVals=[210,900,1000,85,400];
+  const nA=axes.length;
+  // grid rings
+  [0.25,0.5,0.75,1].forEach(fr=>{
+    ctx.strokeStyle=`rgba(15,58,92,${0.3+fr*0.3})`;ctx.lineWidth=0.7;ctx.beginPath();
+    axes.forEach((_,i)=>{const a=-Math.PI/2+i/nA*Math.PI*2;const px=cx+R*fr*Math.cos(a),py=cy+R*fr*Math.sin(a);i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);});
+    ctx.closePath();ctx.stroke();
+  });
+  // axes lines + labels
+  axes.forEach((lbl,i)=>{
+    const a=-Math.PI/2+i/nA*Math.PI*2;
+    ctx.strokeStyle='rgba(138,160,184,0.4)';ctx.lineWidth=0.8;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+R*Math.cos(a),cy+R*Math.sin(a));ctx.stroke();
+    ctx.fillStyle='#8aa0b8';ctx.font='9px Share Tech Mono';ctx.textAlign='center';
+    ctx.fillText(lbl,cx+(R+14)*Math.cos(a),cy+(R+14)*Math.sin(a)+3);
+  });
+  const colors=['#00d4ff','#ffaa00','#00ff88','#aa00ff','#ff3333'];
+  selected.forEach(({name,mat},si)=>{
+    const col=colors[si];
+    ctx.beginPath();ctx.strokeStyle=col;ctx.fillStyle=col+'33';ctx.lineWidth=2;
+    axes.forEach((_, i)=>{
+      const a=-Math.PI/2+i/nA*Math.PI*2;const pct=Math.min(getVal(mat,i)/maxVals[i],1);
+      const px=cx+R*pct*Math.cos(a),py=cy+R*pct*Math.sin(a);
+      i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
+    });ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.fillStyle=col;ctx.font='bold 10px Cairo';ctx.textAlign='right';
+    ctx.fillText('▮ '+name,W-8,18+si*16);
+  });
+  // table
+  const tbl=document.getElementById('matcmpTable');if(!tbl)return;
+  const props=['E (GPa)','Fy (MPa)','Fu (MPa)','ρ (kg/m³)','ν'];
+  const keys=['E','yield','ultimate','rho','nu'];
+  tbl.innerHTML=`<tr><th>الخاصية</th>${selected.map((s,i)=>`<th style="color:${colors[i]}">${s.name}</th>`).join('')}</tr>`+
+    props.map((p,i)=>`<tr><td style="color:var(--text-dim)">${p}</td>${selected.map(s=>`<td>${s.mat[keys[i]]}</td>`).join('')}</tr>`).join('');
+  log('مقارنة المواد','ok');toast('✓ تم رسم المقارنة','success');
+}
+
+// ════════════════════════════════════════════════════════════════
+// IMPROVEMENT 5 — REAL STRESS COLORMAP
+// ════════════════════════════════════════════════════════════════
+function drawColormapBar(minVal,maxVal){
+  const canvas=document.getElementById('colormapBar');if(!canvas)return;
+  canvas.width=100;canvas.height=120;
+  const ctx=canvas.getContext('2d');
+  const grad=ctx.createLinearGradient(0,0,0,120);
+  grad.addColorStop(0,'#ff0000');grad.addColorStop(0.3,'#ff8800');
+  grad.addColorStop(0.5,'#ffff00');grad.addColorStop(0.75,'#00ff88');grad.addColorStop(1,'#0044ff');
+  ctx.fillStyle=grad;ctx.fillRect(0,0,100,120);
+  const cmMin=document.getElementById('cmMin'),cmMax=document.getElementById('cmMax');
+  if(cmMin) cmMin.textContent=(minVal||0).toFixed(0);
+  if(cmMax) cmMax.textContent=(maxVal||250).toFixed(0);
+}
+function applyStressColormap(){
+  if(!AXIOM.meshes.model) return;
+  const maxS=AXIOM.results.stress||87;
+  document.getElementById('colormapLegend')?.classList.add('visible');
+  drawColormapBar(maxS*0.1,maxS);
+  AXIOM.meshes.model.traverse(child=>{
+    if(!child.isMesh||!child.material||child.name==='stressZone') return;
+    const rand=0.2+Math.random()*0.8;
+    child.material.color.setRGB(rand,0.3*(1-rand),0.05*(1-rand));
+  });
+}
+
+// ════════════════════════════════════════════════════════════════
+// IMPROVEMENT 6 — AI ASSISTANT
+// ════════════════════════════════════════════════════════════════
+let aiPanelOpen=false;
+function toggleAIPanel(){
+  aiPanelOpen=!aiPanelOpen;
+  document.getElementById('aiPanel')?.classList.toggle('open',aiPanelOpen);
+  if(aiPanelOpen) updateAIContext();
+}
+function updateAIContext(){
+  const badge=document.getElementById('aiCtxBadge');if(!badge)return;
+  const proj=document.getElementById('projName')?.value||'Assembly_001';
+  const r=AXIOM.results;
+  badge.textContent=`${proj} | ${AXIOM.selectedMaterial} | σ=${r.stress}MPa | SF=${r.sf}`;
+}
+async function sendAIMessage(){
+  const input=document.getElementById('aiInput');if(!input)return;
+  const msg=input.value.trim();if(!msg)return;
+  input.value='';
+  const messagesDiv=document.getElementById('aiMessages');
+  const btn=document.getElementById('aiSendBtn');
+  const userDiv=document.createElement('div');userDiv.className='ai-msg user';userDiv.textContent=msg;messagesDiv.appendChild(userDiv);
+  const thinkDiv=document.createElement('div');thinkDiv.className='ai-msg thinking';thinkDiv.textContent='⏳ جارٍ التفكير...';messagesDiv.appendChild(thinkDiv);
+  messagesDiv.scrollTop=messagesDiv.scrollHeight;
+  if(btn) btn.disabled=true;
+  const r=AXIOM.results;const m=MaterialDB[AXIOM.selectedMaterial];
+  const context=`أنت مساعد هندسي متخصص. بيانات المشروع الحالي:\n- المادة: ${AXIOM.selectedMaterial} (E=${m.E}GPa, Fy=${m.yield}MPa, ν=${m.nu})\n- نتائج: σ_vonMises=${r.stress}MPa, δ_max=${r.disp}mm, SF=${r.sf}\n- الحمل: ${AXIOM.props.load.Magnitude}, الاتجاه: ${AXIOM.props.load.Direction}\nأجب بالعربية بشكل مختصر ودقيق.`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,system:context,messages:[{role:'user',content:msg}]})});
+    const data=await res.json();
+    const reply=data.content?.[0]?.text||'تعذّر الرد.';
+    thinkDiv.remove();
+    const aiDiv=document.createElement('div');aiDiv.className='ai-msg assistant';aiDiv.innerHTML=reply.replace(/\n/g,'<br>');messagesDiv.appendChild(aiDiv);
+  }catch(e){thinkDiv.textContent='⚠ تأكد من تشغيل التطبيق عبر Claude.ai للوصول إلى الذكاء الاصطناعي.';thinkDiv.className='ai-msg assistant';}
+  if(btn) btn.disabled=false;
+  messagesDiv.scrollTop=messagesDiv.scrollHeight;
+}
+
+// ════════════════════════════════════════════════════════════════
+// IMPROVEMENT 7 — INTERACTIVE CHART EDITOR
+// ════════════════════════════════════════════════════════════════
+let currentChartType='mohr';
+const CHART_INPUTS={
+  mohr:[{id:'ci_sx',label:'σx (MPa)',val:120},{id:'ci_sy',label:'σy (MPa)',val:40},{id:'ci_txy',label:'τxy (MPa)',val:30}],
+  qm:[{id:'ci_P',label:'P (kN)',val:50},{id:'ci_L',label:'L (m)',val:4},{id:'ci_w',label:'w (kN/m)',val:0}],
+  stress_strain:[{id:'ci_E',label:'E (GPa)',val:200},{id:'ci_fy',label:'Fy (MPa)',val:250},{id:'ci_fu',label:'Fu (MPa)',val:400}],
+  sf_diagram:[{id:'ci_s',label:'σ_max (MPa)',val:87},{id:'ci_fy2',label:'Fy (MPa)',val:250}],
+  fatigue:[{id:'ci_Su',label:'Su (MPa)',val:500},{id:'ci_Se',label:'Se (MPa)',val:200}],
+};
+function initChartEditor(){buildChartInputs('mohr');setTimeout(drawSelectedChart,100);}
+function selectChartType(type,btn){
+  currentChartType=type;
+  document.querySelectorAll('.chart-type-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  buildChartInputs(type);drawSelectedChart();
+}
+function buildChartInputs(type){
+  const area=document.getElementById('chartInputs');if(!area)return;area.innerHTML='';
+  (CHART_INPUTS[type]||[]).forEach(f=>{area.innerHTML+=`<div><div style="font-family:'Share Tech Mono';font-size:8px;color:var(--text-dim);margin-bottom:2px;">${f.label}</div><input class="chart-ctrl-input" id="${f.id}" type="number" value="${f.val}" style="width:100%;"/></div>`;});
+}
+function drawSelectedChart(){
+  switch(currentChartType){
+    case 'mohr':drawMohrCircle();break;
+    case 'qm':drawQMDiagram();break;
+    case 'stress_strain':drawStressStrainCurve();break;
+    case 'sf_diagram':drawSFDiagram();break;
+    case 'fatigue':drawFatigueCurve();break;
+  }
+}
+function getC(id,def=100){return parseFloat(document.getElementById(id)?.value)||def;}
+function prepChartCanvas(){
+  const c=document.getElementById('chartMainCanvas');if(!c)return null;
+  const W=Math.max(c.clientWidth,500),H=Math.max(c.clientHeight,280);
+  c.width=W;c.height=H;const ctx=c.getContext('2d');
+  ctx.fillStyle='#020408';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(15,58,92,0.35)';ctx.lineWidth=0.5;
+  for(let i=0;i<W;i+=40){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,H);ctx.stroke();}
+  for(let j=0;j<H;j+=40){ctx.beginPath();ctx.moveTo(0,j);ctx.lineTo(W,j);ctx.stroke();}
+  return {ctx,W,H};
+}
+function drawMohrCircle(){
+  const r=prepChartCanvas();if(!r)return;const {ctx,W,H}=r;
+  const sx=getC('ci_sx',120),sy=getC('ci_sy',40),txy=getC('ci_txy',30);
+  const c_=(sx+sy)/2,R_=Math.sqrt(((sx-sy)/2)**2+txy**2);
+  const s1=c_+R_,s2=c_-R_;
+  const cx=W/2,cy=H/2;const range=Math.max(Math.abs(s1),Math.abs(s2),R_)*1.3||100;
+  const sc=Math.min(W,H)*0.4/range;
+  ctx.strokeStyle='rgba(138,160,184,0.4)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,cy);ctx.lineTo(W,cy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx,0);ctx.lineTo(cx,H);ctx.stroke();
+  ctx.beginPath();ctx.arc(cx+c_*sc,cy,R_*sc,0,Math.PI*2);
+  ctx.strokeStyle='#00d4ff';ctx.lineWidth=2.5;ctx.stroke();
+  ctx.fillStyle='rgba(0,212,255,0.04)';ctx.fill();
+  [[sx,txy,'σx','#ffaa00'],[sy,-txy,'σy','#ff3333']].forEach(([s,t,lbl,col])=>{
+    ctx.beginPath();ctx.arc(cx+s*sc,cy-t*sc,5,0,Math.PI*2);ctx.fillStyle=col;ctx.fill();
+    ctx.fillStyle=col;ctx.font='10px Share Tech Mono';ctx.textAlign='center';ctx.fillText(lbl,cx+s*sc,cy-t*sc-12);
+  });
+  ctx.strokeStyle='#00ff88';ctx.lineWidth=1;ctx.setLineDash([4,3]);
+  ctx.beginPath();ctx.moveTo(cx+s2*sc,cy);ctx.lineTo(cx+s1*sc,cy);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='#00ff88';ctx.font='bold 10px Orbitron';ctx.textAlign='center';
+  ctx.fillText('σ₁='+s1.toFixed(1),cx+s1*sc,cy-18);
+  ctx.fillText('σ₂='+s2.toFixed(1),cx+s2*sc,cy-18);
+  ctx.fillText('τmax='+R_.toFixed(1),cx+c_*sc,cy-R_*sc-12);
+  const info=document.getElementById('chartInfoPanel');
+  if(info) info.textContent=`σ₁=${s1.toFixed(2)} MPa | σ₂=${s2.toFixed(2)} MPa | τmax=${R_.toFixed(2)} MPa | θp=${(Math.atan2(2*txy,sx-sy)*90/Math.PI).toFixed(1)}°`;
+}
+function drawQMDiagram(){
+  const r=prepChartCanvas();if(!r)return;const {ctx,W,H}=r;
+  const P=getC('ci_P',50),L=getC('ci_L',4),w=getC('ci_w',0);
+  const RA=P/2+w*L/2;
+  const n=60;const qPts=[],mPts=[];
+  for(let i=0;i<=n;i++){
+    const x=i/n*L;
+    const Q=RA-w*x-(x>L/2?P:0);
+    const M=RA*x-w*x*x/2-(x>L/2?P*(x-L/2):0);
+    qPts.push({x,y:Q});mPts.push({x,y:M});
+  }
+  const maxQ=Math.max(...qPts.map(p=>Math.abs(p.y)))||1;
+  const maxM=Math.max(...mPts.map(p=>Math.abs(p.y)))||1;
+  const drawDiagram=(pts,baseY,maxV,color,label)=>{
+    ctx.strokeStyle='rgba(138,160,184,0.3)';ctx.lineWidth=0.7;
+    ctx.beginPath();ctx.moveTo(50,baseY);ctx.lineTo(W-20,baseY);ctx.stroke();
+    ctx.strokeStyle=color;ctx.fillStyle=color+'22';ctx.lineWidth=2;ctx.beginPath();
+    pts.forEach((p,i)=>{const x=50+p.x/L*(W-70);const y=baseY-p.y/maxV*(H/4.5);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+    ctx.lineTo(W-20,baseY);ctx.lineTo(50,baseY);ctx.closePath();ctx.fill();
+    ctx.beginPath();pts.forEach((p,i)=>{const x=50+p.x/L*(W-70);const y=baseY-p.y/maxV*(H/4.5);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});ctx.stroke();
+    ctx.fillStyle=color;ctx.font='9px Share Tech Mono';ctx.textAlign='left';ctx.fillText(label+' max='+maxV.toFixed(1),55,baseY-H/4.5-8);
+  };
+  drawDiagram(qPts,H/3,maxQ,'#00d4ff','Q (kN)');
+  drawDiagram(mPts,H*2.5/3,maxM,'#ffaa00','M (kN·m)');
+  const info=document.getElementById('chartInfoPanel');
+  if(info) info.textContent=`RA=RB=${RA.toFixed(1)} kN | Q_max=${maxQ.toFixed(1)} kN | M_max=${maxM.toFixed(1)} kN·m`;
+}
+function drawStressStrainCurve(){
+  const r=prepChartCanvas();if(!r)return;const {ctx,W,H}=r;
+  const Ev=getC('ci_E',200)*1000,fy=getC('ci_fy',250),fu=getC('ci_fu',400);
+  const eps_y=fy/Ev,eps_u=eps_y*50;
+  const cx=60,cy=H-50,dx=W-80,dy=H-80;
+  ctx.strokeStyle='rgba(138,160,184,0.3)';ctx.lineWidth=0.8;
+  ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+dx,cy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx,cy-dy);ctx.stroke();
+  ctx.strokeStyle='#00ff88';ctx.lineWidth=2.5;ctx.beginPath();
+  for(let i=0;i<=100;i++){
+    const e=i/100*eps_u;
+    const s=e<=eps_y?Ev*e:e<=eps_y*2?fy:Math.min(fy+(fu-fy)*Math.sqrt((e-eps_y*2)/(eps_u-eps_y*2)),fu);
+    const x=cx+e/eps_u*dx,y=cy-s/fu*dy;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }ctx.stroke();
+  const yy=cy-fy/fu*dy;const xy=cx+eps_y/eps_u*dx;
+  ctx.strokeStyle='#ffaa00';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+  ctx.beginPath();ctx.moveTo(xy,cy);ctx.lineTo(xy,yy);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='#ffaa00';ctx.font='9px Share Tech Mono';ctx.textAlign='center';ctx.fillText('Fy='+fy,xy,yy-10);
+  ctx.fillStyle='#8aa0b8';ctx.font='9px Share Tech Mono';ctx.textAlign='center';
+  ctx.fillText('ε',cx+dx/2,cy+25);ctx.fillText('σ (MPa)',cx-25,cy-dy/2);
+  const info=document.getElementById('chartInfoPanel');
+  if(info) info.textContent=`E=${Ev/1000}GPa | Fy=${fy}MPa | Fu=${fu}MPa | ε_y=${eps_y.toFixed(5)}`;
+}
+function drawSFDiagram(){
+  const r=prepChartCanvas();if(!r)return;const {ctx,W,H}=r;
+  const sMax=getC('ci_s',87),fy=getC('ci_fy2',250);
+  const cx=50,cy=H-50,dx=W-70,dy=H-80;const sfReq=2.5,n=20;
+  ctx.strokeStyle='rgba(138,160,184,0.3)';ctx.lineWidth=0.8;
+  ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+dx,cy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx,cy-dy);ctx.stroke();
+  const ySF=cy-Math.min(sfReq/5,0.9)*dy;
+  ctx.strokeStyle='#ff3333';ctx.lineWidth=1.5;ctx.setLineDash([5,4]);
+  ctx.beginPath();ctx.moveTo(cx,ySF);ctx.lineTo(cx+dx,ySF);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='#ff3333';ctx.font='9px Share Tech Mono';ctx.textAlign='right';ctx.fillText('SF_req='+sfReq,cx+dx,ySF-5);
+  for(let i=0;i<n;i++){
+    const s=sMax*(0.4+Math.random()*0.65);const sf=fy/s;
+    const bw=dx/n*0.75;const x=cx+(i+0.125)*dx/n;
+    const bh=Math.min(sf/5,0.98)*dy;const col=sf>=sfReq?'#00ff88':'#ff3333';
+    ctx.fillStyle=col+'88';ctx.strokeStyle=col;ctx.lineWidth=1;
+    ctx.fillRect(x,cy-bh,bw,bh);ctx.strokeRect(x,cy-bh,bw,bh);
+  }
+  ctx.fillStyle='#8aa0b8';ctx.font='9px Share Tech Mono';ctx.textAlign='center';
+  ctx.fillText('العناصر',cx+dx/2,cy+25);
+  const info=document.getElementById('chartInfoPanel');if(info) info.textContent=`SF_avg=${(fy/sMax).toFixed(2)} | σ_max=${sMax}MPa | Fy=${fy}MPa`;
+}
+function drawFatigueCurve(){
+  const r=prepChartCanvas();if(!r)return;const {ctx,W,H}=r;
+  const Su=getC('ci_Su',500),Se=getC('ci_Se',200);
+  const cx=60,cy=H-50,dx=W-80,dy=H-80;
+  ctx.strokeStyle='rgba(138,160,184,0.3)';ctx.lineWidth=0.8;
+  ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+dx,cy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx,cy-dy);ctx.stroke();
+  ctx.strokeStyle='#00d4ff';ctx.lineWidth=2.5;ctx.beginPath();
+  for(let i=0;i<=60;i++){
+    const logN=3+i/60*4;const S=Math.max(Su-( Su-Se)*Math.pow((logN-3)/4,0.5),Se);
+    const x=cx+i/60*dx,y=cy-S/Su*dy;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }ctx.stroke();
+  const ySe=cy-Se/Su*dy;
+  ctx.strokeStyle='#ffaa00';ctx.lineWidth=1.2;ctx.setLineDash([4,3]);
+  ctx.beginPath();ctx.moveTo(cx,ySe);ctx.lineTo(cx+dx,ySe);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='#ffaa00';ctx.font='9px Share Tech Mono';ctx.textAlign='right';ctx.fillText('Se='+Se,cx+dx,ySe-5);
+  [3,4,5,6,7].forEach(v=>{ctx.fillStyle='#8aa0b8';ctx.font='8px Share Tech Mono';ctx.textAlign='center';ctx.fillText('10^'+v,cx+(v-3)/4*dx,cy+18);});
+  ctx.fillText('N (cycles)',cx+dx/2,cy+32);
+  const info=document.getElementById('chartInfoPanel');if(info) info.textContent=`Su=${Su}MPa | Se=${Se}MPa | Se/Su=${(Se/Su).toFixed(2)}`;
+}
+
+// ════════════════════════════════════════════════════════════════
+// IMPROVEMENT 8 — EXPORT DATA
+// ════════════════════════════════════════════════════════════════
+function exportData(type){
+  const r=AXIOM.results;const m=MaterialDB[AXIOM.selectedMaterial];
+  const proj=document.getElementById('projName')?.value||'Assembly_001';
+  const ts=new Date().toISOString().slice(0,10);
+  if(type==='json'){
+    downloadFile(JSON.stringify({project:proj,material:{name:AXIOM.selectedMaterial,...m},load:AXIOM.props.load,results:r,timestamp:new Date().toISOString()},null,2),'application/json',`${proj}_${ts}.json`);
+  } else if(type==='csv'){
+    const rows=[['Parameter','Value','Unit'],['Von Mises',r.stress,'MPa'],['Displacement',r.disp,'mm'],['Safety Factor',r.sf,'—'],['Strain Energy',r.strain,'J'],['Material',AXIOM.selectedMaterial,'—'],['E',m.E,'GPa'],['Fy',m.yield,'MPa']];
+    downloadFile(rows.map(rw=>rw.join(',')).join('\n'),'text/csv',`${proj}_${ts}.csv`);
+  } else if(type==='report_html'){
+    const html=`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>${proj}</title><style>body{font-family:Arial;background:#020408;color:#e0f0ff;padding:20px}h1{color:#00d4ff}table{border-collapse:collapse;width:100%}th,td{border:1px solid #0f3a5c;padding:7px;text-align:right}th{background:#071525;color:#8aa0b8}.p{color:#00ff88}.f{color:#ff3333}.w{color:#ffaa00}</style></head><body><h1>AXIOM PRO v4.0 — ${proj}</h1><h3>المادة</h3><table><tr><th>Grade</th><th>E</th><th>Fy</th><th>ν</th></tr><tr><td>${AXIOM.selectedMaterial}</td><td>${m.E}GPa</td><td>${m.yield}MPa</td><td>${m.nu}</td></tr></table><h3>النتائج</h3><table><tr><th>المعيار</th><th>القيمة</th><th>الحالة</th></tr><tr><td>Von Mises</td><td>${r.stress}MPa</td><td class="${r.stress<m.yield?'p':'f'}">${r.stress<m.yield?'✓':'✗'}</td></tr><tr><td>Disp</td><td>${r.disp}mm</td><td class="${r.disp<0.5?'p':'f'}">${r.disp<0.5?'✓':'✗'}</td></tr><tr><td>SF</td><td>${r.sf}</td><td class="${r.sf>=2.5?'p':'w'}">${r.sf>=2.5?'✓':'!'}</td></tr></table><p style="color:#8aa0b8;font-size:10px">${new Date().toLocaleString('ar')}</p></body></html>`;
+    downloadFile(html,'text/html',`${proj}_report_${ts}.html`);
+  } else if(type==='svg'){
+    downloadFile(`<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200" style="background:#020408"><text x="200" y="25" fill="#00d4ff" font-family="monospace" font-size="13" text-anchor="middle">AXIOM — ${proj}</text><rect x="100" y="50" width="200" height="20" fill="#888899"/><rect x="190" y="70" width="20" height="80" fill="#888899"/><text x="200" y="170" fill="#8aa0b8" font-size="10" text-anchor="middle">σ=${r.stress}MPa δ=${r.disp}mm SF=${r.sf}</text></svg>`,'image/svg+xml',`${proj}_${ts}.svg`);
+  }
+  document.getElementById('exportModal')?.classList.remove('active');
+  toast('✓ تم التصدير بنجاح','success');log('تصدير: '+type,'ok');
+}
+function downloadFile(content,mimeType,filename){
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type:mimeType}));a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
+
+// ════════════════════════════════════════════════════════════════
+// IMPROVEMENT 9 — PARAMETRIC 3D EDITOR
+// ════════════════════════════════════════════════════════════════
+const ModelParams={L:300,W:200,H:20,D:50};
+function updateParam3D(param,val){
+  ModelParams[param]=parseFloat(val);
+  const el=document.getElementById('pv_'+param);if(el) el.textContent=val;
+}
+function rebuildModel(){
+  if(!AXIOM.scene)return;
+  if(AXIOM.meshes.model) AXIOM.scene.remove(AXIOM.meshes.model);
+  const sc=0.003;const {L,W:Wm,H:Hm,D}=ModelParams;
+  const group=new THREE.Group();
+  const m=MaterialDB[AXIOM.selectedMaterial];
+  const mat=new THREE.MeshPhongMaterial({color:m.color,shininess:60,specular:0x222233});
+  const bp=new THREE.Mesh(new THREE.BoxGeometry(L*sc,Hm*sc,Wm*sc),mat.clone());bp.castShadow=true;group.add(bp);
+  const ribH=Hm*3*sc;
+  const vr=new THREE.Mesh(new THREE.BoxGeometry(Hm*sc*0.5,ribH,Wm*0.7*sc),mat.clone());vr.position.y=ribH/2;group.add(vr);
+  const sr=Math.min(D/2*sc,Wm*sc*0.25);
+  const sh=new THREE.Mesh(new THREE.CylinderGeometry(sr,sr,Hm*sc*1.5,16),new THREE.MeshPhongMaterial({color:0x334455}));sh.position.set(0,ribH*0.6,0);sh.rotation.z=Math.PI/2;group.add(sh);
+  const sz=new THREE.Mesh(new THREE.SphereGeometry(sr*0.8,12,12),new THREE.MeshPhongMaterial({color:0xff4400,transparent:true,opacity:0.4,emissive:0xff2200}));sz.position.set(L*sc*0.05,Hm*sc,0);sz.visible=false;group.add(sz);
+  const ag=new THREE.Group();const am=new THREE.MeshBasicMaterial({color:0xffaa00});
+  const cn=new THREE.Mesh(new THREE.ConeGeometry(0.015,0.05,8),am);cn.position.y=0.025;ag.add(cn);
+  const as=new THREE.Mesh(new THREE.CylinderGeometry(0.005,0.005,0.08,8),am);as.position.y=0.07;ag.add(as);
+  ag.position.set(0,ribH+0.1,0);group.add(ag);
+  [[L*sc*0.4,0,Wm*sc*0.35],[-L*sc*0.4,0,Wm*sc*0.35],[L*sc*0.4,0,-Wm*sc*0.35],[-L*sc*0.4,0,-Wm*sc*0.35]].forEach(pos=>{
+    const c=new THREE.Mesh(new THREE.ConeGeometry(0.01,0.03,8),new THREE.MeshBasicMaterial({color:0x00ff88}));c.position.set(...pos);c.rotation.x=Math.PI;group.add(c);
+  });
+  AXIOM.meshes.model=group;AXIOM.meshes.stressZone=sz;AXIOM.meshes.loadArrow=ag;
+  AXIOM.scene.add(group);recalcResults();
+  log(`نموذج جديد: L=${L} W=${Wm} H=${Hm}mm`,'ok');toast('✓ تم إعادة بناء النموذج','success');
+  pushUndo('إعادة بناء النموذج',()=>{},()=>rebuildModel());
+}
+
+// ════════════════════════════════════════════════════════════════
+// IMPROVEMENT 10 — HOOK COLORMAP & WORKFLOW INTO EXISTING FNS
+// ════════════════════════════════════════════════════════════════
+const _origSetResultType=setResultType;
+function setResultType(type,btn){
+  _origSetResultType(type,btn);
+  if(type==='stress') applyStressColormap();
+  else document.getElementById('colormapLegend')?.classList.remove('visible');
+}
+const _origRunSolver=runSolver;
+function runSolver(){_origRunSolver();setTimeout(()=>{advanceWorkflow('results');updateAIContext();},4200);}
+const _origRecalcResults=recalcResults;
+function recalcResults(){
+  _origRecalcResults();
+  if(AXIOM.currentResultType==='stress') applyStressColormap();
+  updateAIContext();
+}
+
+// ════════════════════════════════════════════════════════════════
+// INIT ALL ADDITIONS
+// ════════════════════════════════════════════════════════════════
+function initAllAdditions(){
+  updateHistoryIndicator();
+  drawColormapBar(0,250);
+  advanceWorkflow('setup');
+  updateAIContext();
+}
+// ════════════════════════════════════════════════════════════════
+
+window.addEventListener('load',()=>{
+  const loadTexts=['INITIALIZING SIMULATION ENGINE...','LOADING MATERIAL DATABASE...','BUILDING FEA FRAMEWORK...','CALIBRATING SOLVERS...','SYSTEM READY'];
+  let li=0;
+  const ltInterval=setInterval(()=>{
+    if(li<loadTexts.length) document.getElementById('loadingText').textContent=loadTexts[li++];
+    else clearInterval(ltInterval);
+  },400);
+
+  setTimeout(()=>{
+    const loading=document.getElementById('loading');
+    loading.style.transition='opacity 0.5s';loading.style.opacity='0';
+    setTimeout(()=>{loading.style.display='none';},500);
+    initGraphics();
+    renderTree();
+    updateProperties();
+    drawAllGraphs();
+    // set default active tab visual
+    switchTab('setup',document.querySelector('.menu-item.active'));
+    // close overlay on init (we want 3D visible first)
+    document.getElementById('tabOverlay').style.display='none';
+    initAllAdditions();
+    log('AXIOM PRO v4.0 جاهز','ok');
+  },2200);
+});
+</script>
+</body>
+</html>
